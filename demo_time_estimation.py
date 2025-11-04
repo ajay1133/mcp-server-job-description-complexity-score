@@ -29,11 +29,12 @@ def print_analysis(title: str, requirement: str):
     if result['detected_factors']:
         sorted_factors = sorted(
             result['detected_factors'].items(),
-            key=lambda x: x[1]['contribution'],
+            key=lambda x: x[1].get('relevance', x[1].get('contribution', 0)),
             reverse=True
         )[:3]
         for i, (factor, data) in enumerate(sorted_factors, 1):
-            print(f"  {i}. {factor.replace('_', ' ').title()} (weight: {data['weight']})")
+            relevance = data.get('relevance', data.get('contribution', 0))
+            print(f"  {i}. {factor.replace('_', ' ').title()} (relevance: {relevance:.2f})")
     else:
         print("  No significant complexity factors detected")
     

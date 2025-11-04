@@ -6,4 +6,27 @@ requires-python = ">=3.11"
 dependencies = [
     "django>=5.2.7",
     "mcp>=1.20.0",
+    "scikit-learn>=1.3.0",
+    "numpy>=1.24.0",
+    "joblib>=1.3.0",
 ]
+
+[tool.uv]
+# Convenient run scripts (use: `uv run <script-name>`)
+scripts = {
+    # Launch the Model Context Protocol Inspector (requires Node.js and npx)
+    "mcp-inspector" = "npx @modelcontextprotocol/inspector",
+
+    # Start this project's MCP server via uv to ensure correct env
+    "mcp-server" = "uv run mcp_server/server.py",
+
+    # Train ML models before using the server (creates artifacts under models/)
+    "train" = "uv run train_model.py",
+
+    # Launch MCP Inspector and have it spawn this server via uv (recommended)
+    # Note: Requires Node.js + npx installed and available on PATH
+    "mcp-inspect-server" = "npx @modelcontextprotocol/inspector --server.command uv --server.args \"run mcp_server/server.py\""
+
+    # Run the demo showcasing complexity + time estimation
+    "demo" = "uv run demo_time_estimation.py"
+}

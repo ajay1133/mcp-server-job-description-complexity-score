@@ -1,13 +1,14 @@
 # MCP Complexity Scorer
 
-A Model Context Protocol (MCP) server that analyzes programming requirements and job descriptions to provide complexity scores. The scoring system uses Replit Agent 3's capabilities as a baseline (score of 100), helping you assess task difficulty and time estimates.
+An MCP (Model Context Protocol) server that predicts the complexity of programming tasks and job requirements using a machine learning model. Scores are calibrated around a baseline of 100 (roughly “Replit Agent 3” difficulty) and include estimated completion time.
 
 ## Features
 
-- **Complexity Analysis**: Analyzes text to detect technical complexity factors
-- **Calibrated Scoring**: Uses Replit Agent 3 as a baseline (score 100) for relative difficulty assessment
-- **Detailed Breakdown**: Provides detected factors, task size, difficulty rating, and summary
-- **MCP Integration**: Works as an MCP server for integration with compatible AI assistants
+- ML-based predictions for complexity score and time-to-complete
+- Calibrated scoring (baseline 100) with human-friendly difficulty labels
+- Detected factor hints (frontend, backend, database, real-time, etc.)
+- Time estimates in hours/days/weeks with uncertainty range
+- MCP tool integration for assistants that support MCP
 
 ## Prerequisites
 
@@ -30,14 +31,27 @@ A Model Context Protocol (MCP) server that analyzes programming requirements and
    uv pip install -e .
    ```
 
-   Or using pip:
+  Or using pip:
    ```powershell
    pip install -e .
    ```
 
 ## Usage
 
-### Running the MCP Server
+### 1) Train the model (first-time or after updating data)
+
+Models are not committed; you must train locally before use:
+
+```powershell
+python train_model.py
+```
+
+This creates the following files under `models/`:
+- `tfidf_vectorizer.joblib`
+- `score_model.joblib`
+- `time_model.joblib`
+
+### 2) Running the MCP Server
 
 Start the MCP server by running:
 
@@ -45,9 +59,19 @@ Start the MCP server by running:
 python mcp_server/server.py
 ```
 
-The server will start and listen for MCP tool requests.
+If models are missing, the server will warn you to run `train_model.py` first.
 
-### Using as a Standalone Tool
+### 2b) Inspect the server with MCP Inspector (recommended)
+
+Requires Node.js with `npx`:
+
+```powershell
+uv run mcp-inspect-server
+```
+
+This launches the MCP Inspector and spawns the server via uv (stdio), ensuring it uses the same Python environment and dependencies managed by uv. Try the `score_complexity` tool interactively.
+
+### 3) Using as a Standalone Tool
 
 You can also import and use the complexity scorer in your Python code:
 
@@ -62,7 +86,7 @@ print(f"Difficulty: {result['difficulty_rating']}")
 print(f"Summary: {result['summary']}")
 ```
 
-### Running Tests
+### 4) Running Tests
 
 Run the test suite:
 
@@ -70,15 +94,21 @@ Run the test suite:
 python test_scoring.py
 ```
 
-### Running the Demo
+### 5) Running the Demo
 
 See the time estimation feature in action:
 
 ```powershell
-python demo_time_estimation.py
+uv run demo
 ```
 
-This will show complexity scoring and time estimates for various task types from simple to expert-level.
+Fallback (without uv scripts):
+
+```powershell
+uv run demo_time_estimation.py
+```
+
+This prints several examples from simple to expert-level and shows predicted time ranges.
 
 ## MCP Tool: `score_complexity`
 
@@ -90,18 +120,13 @@ Analyzes programming requirements or job descriptions and provides a complexity 
 
 ### Returns
 A dictionary containing:
-- `complexity_score`: Numerical score relative to Replit Agent 3 (baseline 100)
-- `detected_factors`: Technical complexity factors identified in the text
-- `task_size`: Estimated task size (simple, moderate, complex, very_complex, expert)
-- `difficulty_rating`: Human-readable difficulty assessment
-- `estimated_completion_time`: Detailed time estimate including:
-  - `hours`: Estimated hours to complete
-  - `days`: Estimated working days (8-hour days)
-  - `weeks`: Estimated weeks (5-day weeks)
-  - `best_estimate`: Human-readable time estimate in the most appropriate unit
-  - `time_range`: Range of time accounting for uncertainty
-  - `assumptions`: Notes about the estimation basis
-- `summary`: Brief summary of the analysis including time estimate
+- `complexity_score`: Numerical score (baseline reference = 100)
+- `detected_factors`: Map of factors and relevance signals (e.g., matches, relevance)
+- `task_size`: simple | moderate | complex | very_complex | expert
+- `difficulty_rating`: Human-friendly description
+- `estimated_completion_time`: Object with `hours`, `days`, `weeks`, `best_estimate`, `time_range`, `assumptions`
+- `summary`: Brief summary including time
+- `model_type`: Always `"machine_learning"` for this version
 
 ### Example Request
 ```json
@@ -113,44 +138,43 @@ A dictionary containing:
 ### Example Response
 ```json
 {
-  "complexity_score": 115.5,
+  "complexity_score": 109.8,
   "baseline_reference": 100,
   "detected_factors": {
-    "database": {"matches": 1, "weight": 33, "contribution": 33},
-    "api_integration": {"matches": 1, "weight": 29, "contribution": 29},
-    "security": {"matches": 1, "weight": 28, "contribution": 28},
-    "real_time": {"matches": 1, "weight": 30, "contribution": 30}
+    "database": {"matches": 1, "relevance": 0.22},
+    "api_integration": {"matches": 1, "relevance": 0.18},
+    "security": {"matches": 1, "relevance": 0.14}
   },
   "task_size": "complex",
-  "size_multiplier": 1.0,
   "difficulty_rating": "Similar to Replit Agent 3 capabilities",
   "estimated_completion_time": {
-    "hours": 9.24,
-    "days": 1.16,
+    "hours": 9.1,
+    "days": 1.14,
     "weeks": 0.23,
-    "best_estimate": "1.2 days",
-    "time_range": "1.2-1.5 days",
+    "best_estimate": "1.1 days",
+    "time_range": "1.1-1.4 days",
     "assumptions": "Assumes developer skilled in using AI coding agents like Replit"
   },
-  "summary": "Complexity score: 115.50. Primary complexity factors: database, real_time, api_integration. Estimated completion time: 1.2 days."
+  "summary": "Complexity score: 109.80. Primary complexity factors: database, api integration, security. Estimated completion time: 1.1 days.",
+  "model_type": "machine_learning"
 }
 ```
 
 ## Complexity Factors
 
-The scorer evaluates the following complexity factors:
+The model reports hints for the following factor categories (non-exhaustive examples):
 
-- **Basic Web** (weight: 30): HTML, CSS, static sites
-- **Database** (weight: 33): PostgreSQL, MySQL, MongoDB, ORMs
-- **API Integration** (weight: 29): REST APIs, GraphQL, webhooks, OAuth
-- **Frontend** (weight: 24): React, Vue, Angular, TypeScript
-- **Backend** (weight: 24): Django, Flask, FastAPI, Node.js
-- **Real-time** (weight: 30): WebSockets, streaming, collaborative features
-- **AI/ML** (weight: 38): Machine learning, neural networks, AI-powered features
-- **Deployment** (weight: 15): CI/CD, Docker, Kubernetes, cloud platforms
-- **Security** (weight: 28): Authentication, encryption, JWT, user management
-- **Testing** (weight: 14): Unit tests, integration tests, test coverage
-- **Scalability** (weight: 26): Load balancing, caching, message queues
+- Basic Web: HTML, CSS, static sites
+- Database: PostgreSQL, MySQL, MongoDB, ORMs
+- API Integration: REST, GraphQL, webhooks, OAuth
+- Frontend: React, Vue, Angular, TypeScript
+- Backend: Django, Flask, FastAPI, Node.js
+- Real-time: WebSockets, streaming, collaborative features
+- AI/ML: ML pipelines, model training, OpenAI, NLP
+- Deployment: CI/CD, Docker, Kubernetes, cloud platforms
+- Security: Auth, encryption, JWT, RBAC
+- Testing: Unit, integration, E2E, coverage
+- Scalability: Caching, queues, load balancing, distributed systems
 
 ## Scoring Interpretation
 
@@ -201,35 +225,37 @@ mcp_complexity_scorer/
 ├── mcp_server/
 │   ├── __init__.py
 │   ├── server.py              # MCP server implementation
-│   └── complexity_scorer.py   # Core scoring logic
+│   └── complexity_scorer.py   # Core ML-based scoring logic
 ├── complexity_mcp_project/
 │   ├── __init__.py
 │   ├── settings.py            # Django settings
 │   ├── urls.py
 │   ├── wsgi.py
 │   └── asgi.py
-├── manage.py                  # Django management script
+├── models/                   # Trained artifacts (created by training)
+│   ├── tfidf_vectorizer.joblib
+│   ├── score_model.joblib
+│   └── time_model.joblib
+├── train_model.py            # Train TF-IDF + regressors
+├── training_data.py          # Labeled examples and validation ranges
+├── demo_time_estimation.py   # Demo runner printing examples
 ├── pyproject.toml            # Project dependencies
-├── test_scoring.py           # Test suite
+├── test_scoring.py           # Scripted tests (ranges)
 └── README.md                 # This file
 ```
 
 ## Development
 
-### Adding New Complexity Factors
+### Add or refine training data
 
-Edit `mcp_server/complexity_scorer.py` and add new factors to the `complexity_factors` dictionary:
+1. Edit `training_data.py` and append new labeled examples.
+2. Retrain models:
 
-```python
-'your_factor': {
-    'keywords': ['keyword1', 'keyword2'],
-    'weight': 25
-}
+```powershell
+python train_model.py
 ```
 
-### Adjusting Weights
-
-Modify the `weight` values in `complexity_factors` to fine-tune the scoring system based on your experience.
+3. Re-run demo/tests.
 
 ## License
 
