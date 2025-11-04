@@ -59,6 +59,10 @@ class ComplexityScorer:
             'very_complex': 1.12,
             'expert': 1.25
         }
+        
+        # Base time estimates in hours for baseline score (100)
+        # Assumes developer skilled in using AI agents like Replit
+        self.baseline_time_hours = 8  # 1 working day for baseline complexity
     
     def analyze_text(self, text: str) -> Dict:
         text_lower = text.lower()
@@ -84,6 +88,7 @@ class ComplexityScorer:
         final_score = base_score * multiplier
         
         difficulty_rating = self._get_difficulty_rating(final_score)
+        time_estimate = self._estimate_completion_time(final_score, task_size)
         
         return {
             'complexity_score': round(final_score, 2),
@@ -92,7 +97,8 @@ class ComplexityScorer:
             'task_size': task_size,
             'size_multiplier': multiplier,
             'difficulty_rating': difficulty_rating,
-            'summary': self._generate_summary(final_score, detected_factors)
+            'estimated_completion_time': time_estimate,
+            'summary': self._generate_summary(final_score, detected_factors, time_estimate)
         }
     
     def _estimate_task_size(self, text: str, num_factors: int) -> str:
@@ -133,10 +139,63 @@ class ComplexityScorer:
         else:
             return "Significantly more challenging than Replit Agent 3 capabilities"
     
-    def _generate_summary(self, score: float, factors: Dict) -> str:
+    def _estimate_completion_time(self, score: float, task_size: str) -> Dict:
+        """
+        Estimates completion time based on complexity score.
+        Assumes developer is skilled in using AI coding agents.
+        """
+        # Calculate base time using linear scaling from baseline
+        ratio = score / self.replit_agent_3_baseline
+        estimated_hours = self.baseline_time_hours * ratio
+        
+        # Apply task size adjustments for non-linear complexity
+        task_adjustments = {
+            'simple': 0.6,      # Simple tasks complete faster
+            'moderate': 0.8,    # Moderate tasks are fairly linear
+            'complex': 1.0,     # Complex tasks scale linearly
+            'very_complex': 1.3,  # Very complex tasks need extra time
+            'expert': 1.6      # Expert tasks have significant overhead
+        }
+        
+        adjusted_hours = estimated_hours * task_adjustments.get(task_size, 1.0)
+        
+        # Minimum time floor (even simple tasks take some time)
+        adjusted_hours = max(adjusted_hours, 0.5)
+        
+        # Convert to various time formats
+        days = adjusted_hours / 8  # Assuming 8-hour workday
+        weeks = days / 5  # Assuming 5-day work week
+        
+        # Determine best time unit for display
+        if adjusted_hours < 1:
+            time_range = f"{int(adjusted_hours * 60)}-{int(adjusted_hours * 60 * 1.3)} minutes"
+            best_estimate = f"{int(adjusted_hours * 60)} minutes"
+        elif adjusted_hours < 8:
+            time_range = f"{adjusted_hours:.1f}-{adjusted_hours * 1.3:.1f} hours"
+            best_estimate = f"{adjusted_hours:.1f} hours"
+        elif days < 5:
+            time_range = f"{days:.1f}-{days * 1.3:.1f} days"
+            best_estimate = f"{days:.1f} days"
+        else:
+            time_range = f"{weeks:.1f}-{weeks * 1.3:.1f} weeks"
+            best_estimate = f"{weeks:.1f} weeks"
+        
+        return {
+            'hours': round(adjusted_hours, 2),
+            'days': round(days, 2),
+            'weeks': round(weeks, 2),
+            'best_estimate': best_estimate,
+            'time_range': time_range,
+            'assumptions': 'Assumes developer skilled in using AI coding agents like Replit'
+        }
+    
+    def _generate_summary(self, score: float, factors: Dict, time_estimate: Dict = None) -> str:
         factor_names = list(factors.keys())
         if not factor_names:
-            return "Low complexity task with minimal technical requirements."
+            summary = "Low complexity task with minimal technical requirements."
+            if time_estimate:
+                summary += f" Estimated time: {time_estimate['best_estimate']}."
+            return summary
         
         top_factors = sorted(
             factor_names,
@@ -146,5 +205,8 @@ class ComplexityScorer:
         
         summary = f"Complexity score: {score:.2f}. "
         summary += f"Primary complexity factors: {', '.join(top_factors)}. "
+        
+        if time_estimate:
+            summary += f"Estimated completion time: {time_estimate['best_estimate']}."
         
         return summary

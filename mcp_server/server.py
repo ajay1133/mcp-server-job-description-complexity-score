@@ -30,9 +30,8 @@ def score_complexity(requirement: str) -> dict:
         - detected_factors: Technical complexity factors identified
         - task_size: Estimated task size (simple, moderate, complex, etc.)
         - difficulty_rating: Human-readable difficulty assessment
-        - best_completion_time: Estimated time to complete the task assuming candidate is good 
-        in using AI agents like Replit for coding and making apps
-        - summary: Brief summary of the analysis
+        - estimated_completion_time: Time estimate with hours, days, weeks, and best estimate
+        - summary: Brief summary of the analysis including time estimate
     """
     result = scorer.analyze_text(requirement)
     return result

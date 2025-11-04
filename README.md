@@ -70,6 +70,16 @@ Run the test suite:
 python test_scoring.py
 ```
 
+### Running the Demo
+
+See the time estimation feature in action:
+
+```powershell
+python demo_time_estimation.py
+```
+
+This will show complexity scoring and time estimates for various task types from simple to expert-level.
+
 ## MCP Tool: `score_complexity`
 
 ### Description
@@ -84,7 +94,14 @@ A dictionary containing:
 - `detected_factors`: Technical complexity factors identified in the text
 - `task_size`: Estimated task size (simple, moderate, complex, very_complex, expert)
 - `difficulty_rating`: Human-readable difficulty assessment
-- `summary`: Brief summary of the analysis
+- `estimated_completion_time`: Detailed time estimate including:
+  - `hours`: Estimated hours to complete
+  - `days`: Estimated working days (8-hour days)
+  - `weeks`: Estimated weeks (5-day weeks)
+  - `best_estimate`: Human-readable time estimate in the most appropriate unit
+  - `time_range`: Range of time accounting for uncertainty
+  - `assumptions`: Notes about the estimation basis
+- `summary`: Brief summary of the analysis including time estimate
 
 ### Example Request
 ```json
@@ -107,7 +124,15 @@ A dictionary containing:
   "task_size": "complex",
   "size_multiplier": 1.0,
   "difficulty_rating": "Similar to Replit Agent 3 capabilities",
-  "summary": "Complexity score: 115.50. Primary complexity factors: database, real_time, api_integration."
+  "estimated_completion_time": {
+    "hours": 9.24,
+    "days": 1.16,
+    "weeks": 0.23,
+    "best_estimate": "1.2 days",
+    "time_range": "1.2-1.5 days",
+    "assumptions": "Assumes developer skilled in using AI coding agents like Replit"
+  },
+  "summary": "Complexity score: 115.50. Primary complexity factors: database, real_time, api_integration. Estimated completion time: 1.2 days."
 }
 ```
 
@@ -134,6 +159,40 @@ The scorer evaluates the following complexity factors:
 - **80-120**: Similar to Replit Agent 3 capabilities (baseline)
 - **120-150**: More challenging than Replit Agent 3 capabilities
 - **> 150**: Significantly more challenging than Replit Agent 3 capabilities
+
+## Time Estimation
+
+The scorer provides completion time estimates based on the complexity score, assuming the developer is skilled in using AI coding agents like Replit.
+
+### Estimation Logic
+
+1. **Baseline**: A task with a complexity score of 100 is estimated at 8 hours (1 working day)
+2. **Linear Scaling**: Time scales proportionally with complexity score
+3. **Task Size Adjustments**: Non-linear adjustments based on task complexity:
+   - Simple tasks: 0.6x multiplier (complete faster than linear)
+   - Moderate tasks: 0.8x multiplier
+   - Complex tasks: 1.0x multiplier (linear)
+   - Very complex tasks: 1.3x multiplier (extra coordination overhead)
+   - Expert tasks: 1.6x multiplier (significant architectural overhead)
+4. **Time Range**: Provides a range (best estimate to 1.3x) to account for uncertainty
+
+### Time Format
+
+The estimate automatically selects the most appropriate time unit:
+- **Minutes**: For tasks under 1 hour
+- **Hours**: For tasks 1-8 hours
+- **Days**: For tasks 1-5 days (8-hour workdays)
+- **Weeks**: For tasks over 5 days (5-day work weeks)
+
+### Example Time Estimates
+
+| Complexity Score | Task Size | Estimated Time |
+|-----------------|-----------|----------------|
+| 30 | Simple | ~1.4 hours |
+| 75 | Moderate | ~4.8 hours |
+| 100 | Complex | ~8 hours (1 day) |
+| 150 | Very Complex | ~2.4 days |
+| 200 | Expert | ~3.2 days |
 
 ## Project Structure
 
