@@ -31,3 +31,16 @@ package-dir = {"" = "."}
 [tool.setuptools.packages.find]
 include = ["mcp_server*", "complexity_mcp_project*"]
 exclude = ["models*", "__pycache__*"]
+
+[tool.black]
+line-length = 120
+target-version = ["py311"]
+skip-string-normalization = true
+exclude = '''
+(
+    /mcp_server/complexity_scorer\.py|
+    /mcp_server/software_complexity_scorer\.py|
+    /mcp_server/online_tech_inference\.py|
+    /mcp_server/hiring_classifier\.py
+)
+'''
