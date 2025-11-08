@@ -1,0 +1,208 @@
+{
+  "_comment": "Realistic AI-assisted development speedup model based on LOC, technology difficulty, and task complexity",
+  
+  "human_baseline": {
+    "lines_per_day": 100,
+    "seconds_per_day": 86400,
+    "seconds_per_line": 864,
+    "comment": "Average developer writes 100 LOC/day including design, coding, testing, debugging"
+  },
+  
+  "ai_capabilities": {
+    "max_context_tokens": 200000,
+    "max_context_lines": 8000,
+    "lines_per_minute_generation": 100,
+    "comment": "AI can generate ~100 lines/min but quality degrades with size"
+  },
+  
+  "ai_effectiveness_by_task": {
+    "boilerplate_crud": {
+      "description": "REST APIs, CRUD operations, simple forms",
+      "ai_speedup": 0.25,
+      "comment": "AI writes 75% of code, human reviews/fixes 25%",
+      "human_time_percent": 25,
+      "examples": ["Simple REST endpoint", "Basic form validation", "Database models"]
+    },
+    "standard_features": {
+      "description": "Auth, payments, file upload, search",
+      "ai_speedup": 0.40,
+      "comment": "AI writes 60%, human reviews/integrates",
+      "human_time_percent": 40,
+      "examples": ["JWT auth flow", "Stripe integration", "Image upload to S3"]
+    },
+    "complex_business_logic": {
+      "description": "Algorithms, state machines, workflows",
+      "ai_speedup": 0.60,
+      "comment": "AI helps 40%, human writes most logic",
+      "human_time_percent": 60,
+      "examples": ["Recommendation algorithm", "Order state machine", "Pricing engine"]
+    },
+    "distributed_systems": {
+      "description": "Microservices, message queues, scaling",
+      "ai_speedup": 0.70,
+      "comment": "AI helps 30%, human architects most",
+      "human_time_percent": 70,
+      "examples": ["Kafka consumer", "Service mesh config", "Distributed transactions"]
+    },
+    "specialized_domains": {
+      "description": "ML models, video processing, graphics",
+      "ai_speedup": 0.80,
+      "comment": "AI helps 20%, highly specialized",
+      "human_time_percent": 80,
+      "examples": ["Custom ML model", "Video transcoding pipeline", "WebGL shader"]
+    }
+  },
+  
+  "ai_speedup_by_technology_difficulty": {
+    "easy_tech_1_3": {
+      "difficulty_range": "1-3",
+      "base_speedup": 0.30,
+      "comment": "AI knows these well, lots of training data",
+      "examples": ["Flask", "Vue", "Redis", "Markdown"]
+    },
+    "medium_tech_4_6": {
+      "difficulty_range": "4-6",
+      "base_speedup": 0.45,
+      "comment": "AI moderately helpful, some hallucinations",
+      "examples": ["React", "Django", "Postgres", "Docker"]
+    },
+    "hard_tech_7_8": {
+      "difficulty_range": "7-8",
+      "base_speedup": 0.65,
+      "comment": "AI struggles, limited training data",
+      "examples": ["Kubernetes", "Kafka", "Cassandra", "ML"]
+    },
+    "expert_tech_9_10": {
+      "difficulty_range": "9-10",
+      "base_speedup": 0.85,
+      "comment": "AI barely helps, rare/complex",
+      "examples": ["Erlang", "Custom distributed systems"]
+    }
+  },
+  
+  "ai_speedup_by_project_size": {
+    "small_under_5k_loc": {
+      "loc_range": "0-5000",
+      "speedup_multiplier": 1.0,
+      "comment": "AI handles entire project in context",
+      "coherence_penalty": 0
+    },
+    "medium_5k_20k_loc": {
+      "loc_range": "5000-20000",
+      "speedup_multiplier": 1.2,
+      "comment": "AI needs multiple passes, some coherence issues",
+      "coherence_penalty": 0.2
+    },
+    "large_20k_50k_loc": {
+      "loc_range": "20000-50000",
+      "speedup_multiplier": 1.5,
+      "comment": "AI struggles with cross-file consistency",
+      "coherence_penalty": 0.5
+    },
+    "xlarge_50k_plus_loc": {
+      "loc_range": "50000+",
+      "speedup_multiplier": 2.0,
+      "comment": "AI context limits hit, major coherence issues",
+      "coherence_penalty": 1.0
+    }
+  },
+  
+  "calculation_formula": {
+    "description": "How to calculate AI-assisted time from manual time",
+    "steps": [
+      "1. Get base_manual_hours from LOC estimate (LOC * human_seconds_per_line / 3600)",
+      "2. Calculate avg_tech_difficulty from technology_difficulty.json",
+      "3. Get base_speedup from technology difficulty tier",
+      "4. Adjust for project_size (coherence_penalty)",
+      "5. Adjust for task_complexity (boilerplate vs specialized)",
+      "6. Final: ai_hours = base_manual_hours * final_speedup_factor"
+    ],
+    "formula": "ai_hours = manual_hours * (base_speedup * size_multiplier * task_multiplier)",
+    "constraints": [
+      "Minimum speedup: 0.15 (never faster than 15% of manual)",
+      "Maximum speedup: 0.90 (never faster than 10% of manual for safety)",
+      "Reality check: If LOC > 10k, speedup should be > 0.50"
+    ]
+  },
+  
+  "realistic_examples": {
+    "simple_crud_app": {
+      "description": "React + Node + Postgres CRUD app",
+      "loc": 3000,
+      "technologies": ["react", "node", "postgres"],
+      "avg_difficulty": 4.0,
+      "manual_hours": 72,
+      "calculation": {
+        "base_speedup_from_difficulty": 0.45,
+        "task_type": "boilerplate_crud",
+        "task_multiplier": 0.70,
+        "size_multiplier": 1.0,
+        "final_speedup": 0.32,
+        "ai_hours": 23,
+        "time_saved": "68% faster"
+      }
+    },
+    "youtube_clone": {
+      "description": "Video streaming platform",
+      "loc": 50000,
+      "technologies": ["react", "node", "postgres", "redis", "kafka", "s3", "video_processing"],
+      "avg_difficulty": 5.8,
+      "manual_hours": 1200,
+      "calculation": {
+        "base_speedup_from_difficulty": 0.52,
+        "task_type": "complex_business_logic",
+        "task_multiplier": 1.10,
+        "size_multiplier": 2.0,
+        "final_speedup": 0.71,
+        "ai_hours": 852,
+        "time_saved": "29% faster",
+        "comment": "Large codebase + video processing limits AI help"
+      }
+    },
+    "twitter_clone": {
+      "description": "Social media platform",
+      "loc": 15000,
+      "technologies": ["react", "node", "postgres", "redis", "cdn"],
+      "avg_difficulty": 4.2,
+      "manual_hours": 360,
+      "calculation": {
+        "base_speedup_from_difficulty": 0.46,
+        "task_type": "standard_features",
+        "task_multiplier": 0.95,
+        "size_multiplier": 1.3,
+        "final_speedup": 0.57,
+        "ai_hours": 205,
+        "time_saved": "43% faster"
+      }
+    },
+    "kubernetes_ml_system": {
+      "description": "K8s orchestrated ML pipeline",
+      "loc": 25000,
+      "technologies": ["kubernetes", "python", "tensorflow", "kafka", "postgres"],
+      "avg_difficulty": 7.8,
+      "manual_hours": 600,
+      "calculation": {
+        "base_speedup_from_difficulty": 0.72,
+        "task_type": "specialized_domains",
+        "task_multiplier": 1.15,
+        "size_multiplier": 1.5,
+        "final_speedup": 0.83,
+        "ai_hours": 498,
+        "time_saved": "17% faster",
+        "comment": "Expert tech + ML = AI barely helps"
+      }
+    }
+  },
+  
+  "implementation_notes": {
+    "tech_difficulty_calculation": "Load technology_difficulty.json, average all tech difficulties for the project",
+    "size_detection": "Use predicted LOC from regressor model",
+    "task_type_heuristics": [
+      "If 'crud' in text or simple stack → boilerplate_crud",
+      "If 'kubernetes' or 'kafka' or 'cassandra' → distributed_systems",
+      "If 'ml' or 'ai_llm' or 'video_processing' → specialized_domains",
+      "Else → standard_features or complex_business_logic"
+    ],
+    "safety_bounds": "Always clamp final speedup between 0.15 and 0.90"
+  }
+}

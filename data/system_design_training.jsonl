@@ -1,0 +1,44 @@
+# System Design Architecture Training Data
+# Format: requirement -> architecture_pattern
+
+{"requirement": "Build a simple blog with posts and comments", "architecture": "monolith", "reasoning": "Simple CRUD, low complexity"}
+{"requirement": "Create a todo list application", "architecture": "monolith", "reasoning": "Single domain, simple data model"}
+{"requirement": "Build a personal portfolio website", "architecture": "monolith", "reasoning": "Static content, minimal backend"}
+{"requirement": "Develop a basic CRM system", "architecture": "modular-monolith", "reasoning": "Multiple modules but shared database"}
+{"requirement": "Create an e-commerce platform with inventory and payments", "architecture": "modular-monolith", "reasoning": "Multiple domains, shared infrastructure"}
+{"requirement": "Build a content management system with multiple content types", "architecture": "modular-monolith", "reasoning": "Modular design, centralized data"}
+{"requirement": "Develop a social media platform with posts, messaging, and notifications", "architecture": "microservices", "reasoning": "Multiple independent domains, scale requirements"}
+{"requirement": "Create a video streaming service with recommendations", "architecture": "microservices", "reasoning": "High scale, different scaling needs per service"}
+{"requirement": "Build a marketplace connecting buyers and sellers with payments", "architecture": "microservices", "reasoning": "Complex transactions, independent services"}
+{"requirement": "Develop a real-time chat application with presence", "architecture": "event-driven", "reasoning": "Real-time updates, async communication"}
+{"requirement": "Create an IoT dashboard processing sensor data", "architecture": "event-driven", "reasoning": "Event streams, real-time processing"}
+{"requirement": "Build a serverless image processing API", "architecture": "serverless", "reasoning": "Stateless processing, pay-per-use"}
+{"requirement": "Develop a webhook handler for external services", "architecture": "serverless", "reasoning": "Event-driven, sporadic workload"}
+{"requirement": "Create a scheduled data pipeline", "architecture": "serverless", "reasoning": "Batch processing, scheduled execution"}
+{"requirement": "Build an API with authentication and user management", "architecture": "modular-monolith", "reasoning": "Standard API, moderate complexity"}
+{"requirement": "Develop a multi-tenant SaaS application", "architecture": "modular-monolith", "reasoning": "Shared infrastructure, tenant isolation"}
+{"requirement": "Create a booking system for hotels and flights", "architecture": "microservices", "reasoning": "External integrations, complex workflows"}
+{"requirement": "Build a fintech app with transactions and compliance", "architecture": "microservices", "reasoning": "Regulatory requirements, high reliability"}
+{"requirement": "Develop a food delivery platform connecting restaurants and drivers", "architecture": "microservices", "reasoning": "Multiple actors, real-time coordination"}
+{"requirement": "Create a machine learning model serving platform", "architecture": "microservices", "reasoning": "ML services, different scaling patterns"}
+{"requirement": "Build a distributed logging and monitoring system", "architecture": "microservices", "reasoning": "High throughput, specialized components"}
+{"requirement": "Develop an analytics dashboard with data aggregation", "architecture": "modular-monolith", "reasoning": "Data processing, shared analytics"}
+{"requirement": "Create a notification service supporting multiple channels", "architecture": "microservices", "reasoning": "Multiple delivery methods, independent scaling"}
+{"requirement": "Build a recommendation engine with personalization", "architecture": "microservices", "reasoning": "ML components, data-intensive"}
+{"requirement": "Develop a document collaboration tool like Google Docs", "architecture": "microservices", "reasoning": "Real-time sync, operational transforms"}
+{"requirement": "Create a simple REST API for CRUD operations", "architecture": "monolith", "reasoning": "Simple API, no complex workflows"}
+{"requirement": "Build a landing page with contact form", "architecture": "serverless", "reasoning": "Minimal backend, static frontend"}
+{"requirement": "Develop a multi-region global application", "architecture": "microservices", "reasoning": "Geographic distribution, high availability"}
+{"requirement": "Create a batch processing system for large datasets", "architecture": "event-driven", "reasoning": "Async processing, queue-based"}
+{"requirement": "Build a search engine with indexing", "architecture": "microservices", "reasoning": "Indexing service, query service separation"}
+{"requirement": "Develop a CI/CD pipeline orchestrator", "architecture": "microservices", "reasoning": "Multiple stages, independent components"}
+{"requirement": "Create a customer support ticketing system", "architecture": "modular-monolith", "reasoning": "Workflow management, shared state"}
+{"requirement": "Build an inventory management system", "architecture": "modular-monolith", "reasoning": "Transaction management, data consistency"}
+{"requirement": "Develop a healthcare patient portal", "architecture": "modular-monolith", "reasoning": "Compliance, data sensitivity"}
+{"requirement": "Create a student grading and attendance system", "architecture": "modular-monolith", "reasoning": "Academic workflows, centralized data"}
+{"requirement": "Build a project management tool with tasks and timelines", "architecture": "modular-monolith", "reasoning": "Collaborative features, shared state"}
+{"requirement": "Develop a real-time stock trading platform", "architecture": "event-driven", "reasoning": "Low latency, event streams"}
+{"requirement": "Create a gaming leaderboard service", "architecture": "serverless", "reasoning": "Spiky traffic, stateless"}
+{"requirement": "Build an email campaign management system", "architecture": "microservices", "reasoning": "Bulk sending, delivery tracking"}
+{"requirement": "Develop a payment gateway integration", "architecture": "microservices", "reasoning": "External APIs, transaction handling"}
+{"requirement": "Create a weather data aggregation service", "architecture": "serverless", "reasoning": "Scheduled scraping, batch processing"}

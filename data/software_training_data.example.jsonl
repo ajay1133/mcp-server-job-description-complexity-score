@@ -1,0 +1,10 @@
+{"text": "Build a React dashboard with user login, role-based access, and Stripe payments", "is_software": true, "technologies": ["react", "auth", "payments", "node", "postgres"], "loc": 2400, "hours": 160, "complexity_score": 115}
+{"text": "Create a FastAPI microservice that ingests CSV files, stores records in PostgreSQL, and exposes REST endpoints", "is_software": true, "technologies": ["python_fastapi", "postgres", "node"], "loc": 1400, "hours": 95, "complexity_score": 90}
+{"text": "Need someone to design wedding decorations and coordinate vendors", "is_software": false}
+{"text": "Implement real-time chat with WebSocket gateway in Node and Redis pub/sub", "is_software": true, "technologies": ["node", "redis"], "loc": 1100, "hours": 80, "complexity_score": 85}
+{"text": "Refactor legacy Django app adding JWT auth and background task queue", "is_software": true, "technologies": ["python_django", "auth", "redis"], "loc": 1800, "hours": 120, "complexity_score": 105}
+{"text": "Looking for caregiver to help elderly patient with daily routines", "is_software": false}
+{"text": "Add ML powered recommendations (vector similarity + fine-tuned LLM prompts) to existing Next.js ecommerce site", "is_software": true, "technologies": ["nextjs", "ai_llm", "postgres"], "loc": 2600, "hours": 190, "complexity_score": 130}
+{"text": "Need plumber to fix leaking kitchen sink", "is_software": false}
+{"text": "Build a CI/CD pipeline with GitHub Actions deploying Dockerized FastAPI to AWS ECS", "is_software": true, "technologies": ["devops", "python_fastapi", "aws", "docker"], "loc": 900, "hours": 70, "complexity_score": 80}
+{"text": "Create mobile app with React Native for tracking workouts and syncing to backend API", "is_software": true, "technologies": ["react", "node", "auth"], "loc": 2200, "hours": 150, "complexity_score": 110}

@@ -1,0 +1,13 @@
+{
+  "basic_web": ["html", "css", "landing page", "webpage", "static site"],
+  "database": ["database", "postgresql", "mysql", "mongodb", "sqlite", "orm", "schema", "nosql", "dynamodb"],
+  "api_integration": ["rest api", "graphql", "webhook", "api", "endpoints", "oauth", "stripe", "payment"],
+  "frontend": ["react", "vue", "angular", "frontend", "javascript", "typescript", "next.js", "svelte"],
+  "backend": ["backend", "flask", "django", "fastapi", "node.js", "nodejs", "express", "microservice", "lambda"],
+  "real_time": ["websocket", "real-time", "streaming", "socket.io", "sse", "mqtt", "webrtc"],
+  "ai_ml": ["machine learning", "neural network", "openai", "ai", "ml", "recommendation", "nlp"],
+  "deployment": ["deployment", "deploy", "release", "publish", "ci/cd", "docker", "kubernetes", "aws", "azure", "cloud", "heroku", "app store", "play store"],
+  "security": ["security", "encryption", "jwt", "authentication", "authorization", "password", "pki"],
+  "testing": ["testing", "unit test", "integration test", "e2e", "pytest", "jest", "coverage"],
+  "scalability": ["scalable", "load balancing", "caching", "redis", "kafka", "message queue", "distributed"]
+}
