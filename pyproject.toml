@@ -16,7 +16,6 @@ dependencies = [
 [project.scripts]
 # Console scripts (available after `uv pip install -e .` or within `uv run`)
 mcp-server = "mcp_server.server:main"
-mcp-inspect-server = "mcp_server.inspect:main"
 flask-score-server = "mcp_server.flask_app:main"
 train-model = "train_model:main"
 demo = "demo_time_estimation:main"
