@@ -30,5 +30,8 @@ ENV SOFTWARE_LOG_DIR=/app/logs/complexity_scorer_logs
 # Expose port (if needed for future HTTP interface)
 EXPOSE 8000
 
-# Run the MCP server
-CMD ["python", "mcp_server/server.py"]
+# Default command can be overridden at runtime.
+# Use FLASK_MODE=1 to start Flask API server instead of MCP server.
+ENV FLASK_MODE=0
+
+CMD ["/bin/sh", "-c", "if [ \"$FLASK_MODE\" = \"1\" ]; then python -m mcp_server.flask_app; else python mcp_server/server.py; fi"]

@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 dependencies = [
     "django>=5.2.7",
     "mcp>=1.20.0",
+    "flask>=3.0.0",
     "scikit-learn>=1.3.0",
     "numpy>=1.24.0",
     "joblib>=1.3.0",
@@ -16,6 +17,7 @@ dependencies = [
 # Console scripts (available after `uv pip install -e .` or within `uv run`)
 mcp-server = "mcp_server.server:main"
 mcp-inspect-server = "mcp_server.inspect:main"
+flask-score-server = "mcp_server.flask_app:main"
 train-model = "train_model:main"
 demo = "demo_time_estimation:main"
 
