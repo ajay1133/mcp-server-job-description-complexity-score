@@ -698,3 +698,167 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## Repository
 
 [https://github.com/ajay1133/mcp-server-job-description-complexity-score](https://github.com/ajay1133/mcp-server-job-description-complexity-score)
+
+---
+
+## Docker Deployment
+
+The project includes Docker support for containerized deployment with both MCP server and Flask API modes.
+
+### Building the Docker Image
+
+```powershell
+# Build the image
+docker build -t mcp-complexity-scorer:latest .
+
+# Or build with a specific tag
+docker build -t your-dockerhub-username/mcp-complexity-scorer:dev .
+```
+
+### Running with Docker
+
+**MCP Server Mode (default):**
+```powershell
+docker run -p 8000:8000 mcp-complexity-scorer:latest
+```
+
+**Flask API Mode:**
+```powershell
+docker run -p 8000:8000 -e FLASK_MODE=1 mcp-complexity-scorer:latest
+```
+
+**With custom configuration:**
+```powershell
+docker run -p 8000:8000 `
+  -e FLASK_MODE=1 `
+  -e HOST=0.0.0.0 `
+  -e PORT=8000 `
+  -v ${PWD}/logs:/app/logs `
+  mcp-complexity-scorer:latest
+```
+
+### Docker Compose
+
+For local development with logs mounted:
+
+```powershell
+docker-compose up
+```
+
+The `docker-compose.yml` includes:
+- Volume mounts for logs persistence
+- Environment variables for configuration
+- Port mapping to localhost:8000
+
+### Flask API Endpoints
+
+When running in Flask mode (`FLASK_MODE=1`):
+
+- **GET `/health`** - Health check endpoint
+  ```bash
+  curl http://localhost:8000/health
+  ```
+
+- **POST `/score`** - Analyze complexity
+  ```bash
+  curl -X POST http://localhost:8000/score \
+    -H "Content-Type: application/json" \
+    -d '{"requirement": "Build a React dashboard with Stripe payments"}'
+  ```
+
+---
+
+## CI/CD Pipeline
+
+The project uses GitHub Actions for continuous integration and deployment across multiple environments.
+
+### Pipeline Overview
+
+**Triggers:**
+- Push to: `master`, `development`, `qa`, `uat` branches
+- Pull requests to any of these branches
+
+**Jobs:**
+1. **Test** - Runs on Python 3.10, 3.11, 3.12
+2. **Lint** - Code quality checks (flake8, black, isort)
+3. **Docker** - Build and push images (on push only)
+4. **Deploy** - Environment-specific deployment (placeholder)
+
+### Branch → Environment Mapping
+
+| Branch | Environment | Docker Tag | Description |
+|--------|-------------|------------|-------------|
+| `master` | Production | `prod-{sha}`, `prod-latest` | Stable production releases |
+| `development` | Development | `dev-{sha}`, `dev-latest` | Active development |
+| `qa` | QA | `qa-{sha}`, `qa-latest` | Quality assurance testing |
+| `uat` | UAT | `uat-{sha}`, `uat-latest` | User acceptance testing |
+
+### Setting Up CI/CD
+
+**1. Configure Docker Hub Secrets**
+
+Add these secrets to your GitHub repository (Settings → Secrets and variables → Actions):
+
+- **`DOCKER_USERNAME`**: Your Docker Hub username
+- **`DOCKER_PASSWORD`**: Docker Hub access token (recommended) or password
+
+**To create a Docker Hub access token:**
+1. Log in to https://hub.docker.com
+2. Go to Account Settings → Security → Access Tokens
+3. Click "New Access Token"
+4. Set permissions: Read, Write, Delete
+5. Copy the token and add as `DOCKER_PASSWORD` secret
+
+**2. Workflow Steps**
+
+The pipeline automatically:
+- ✅ Runs tests across Python 3.10, 3.11, 3.12
+- ✅ Checks code style with flake8, black, isort
+- ✅ Builds Docker images with environment-specific tags
+- ✅ Pushes to Docker Hub on successful builds
+- ℹ️ Notifies deployment (customize for your infrastructure)
+
+**3. Running Locally**
+
+Test the CI steps locally before pushing:
+
+```powershell
+# Install dev dependencies
+pip install pytest pytest-cov flake8 black isort
+
+# Run tests
+pytest tests/ -v --cov=mcp_server
+
+# Check linting
+flake8 mcp_server/
+black --check mcp_server/
+isort --check-only mcp_server/
+
+# Build Docker
+docker build -t mcp-complexity-scorer:test .
+```
+
+### Deployment
+
+After Docker images are pushed, customize the `deploy` job in `.github/workflows/ci-cd.yml` to:
+- Deploy to Kubernetes clusters
+- Update ECS task definitions
+- Trigger Azure Container Instances
+- Or your preferred container orchestration platform
+
+**Example Kubernetes deployment:**
+```yaml
+- name: Deploy to Kubernetes
+  run: |
+    kubectl set image deployment/complexity-scorer \
+      app=${{ secrets.DOCKER_USERNAME }}/mcp-complexity-scorer:${{ env.IMAGE_TAG }} \
+      --namespace=${{ env.ENV_NAME }}
+```
+
+### Monitoring CI/CD
+
+- View workflow runs: Repository → Actions tab
+- Check build logs: Click on any workflow run
+- Docker images: https://hub.docker.com/r/YOUR_USERNAME/mcp-complexity-scorer
+
+---

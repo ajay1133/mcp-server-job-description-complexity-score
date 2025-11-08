@@ -1,0 +1,10 @@
+[flake8]
+max-line-length = 120
+extend-ignore = E203, W503
+
+per-file-ignores =
+    mcp_server/complexity_scorer.py: E501, W293, F401, W391, E129, W504, E231, F541, E306, E127, E305, E303, E226
+    mcp_server/software_complexity_scorer.py: E501, W293, E127, E701, E303, E305, E226, E306, F401, E401, W291, E302, E402, F541
+    mcp_server/online_tech_inference.py: F401, E302, E501, W293, W291
+    mcp_server/hiring_classifier.py: E302, E501, E231, E201, E202, E305
+    mcp_server/server.py: E402, E302, E501

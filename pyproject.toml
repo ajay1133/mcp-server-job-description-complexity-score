@@ -2,10 +2,11 @@
 name = "repl-nix-workspace"
 version = "0.1.0"
 description = "Add your description here"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = [
     "django>=5.2.7",
     "mcp>=1.20.0",
+    "flask>=3.0.0",
     "scikit-learn>=1.3.0",
     "numpy>=1.24.0",
     "joblib>=1.3.0",
@@ -16,6 +17,7 @@ dependencies = [
 # Console scripts (available after `uv pip install -e .` or within `uv run`)
 mcp-server = "mcp_server.server:main"
 mcp-inspect-server = "mcp_server.inspect:main"
+flask-score-server = "mcp_server.flask_app:main"
 train-model = "train_model:main"
 demo = "demo_time_estimation:main"
 
@@ -29,3 +31,30 @@ package-dir = {"" = "."}
 [tool.setuptools.packages.find]
 include = ["mcp_server*", "complexity_mcp_project*"]
 exclude = ["models*", "__pycache__*"]
+
+[tool.black]
+line-length = 120
+target-version = ["py311"]
+skip-string-normalization = true
+exclude = '''
+(
+    /mcp_server/complexity_scorer\.py|
+    /mcp_server/software_complexity_scorer\.py|
+    /mcp_server/online_tech_inference\.py|
+    /mcp_server/hiring_classifier\.py
+)
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 120
+known_first_party = ["mcp_server"]
+src_paths = ["."]
+extend_skip = [
+    "mcp_server/complexity_scorer.py",
+    "mcp_server/software_complexity_scorer.py",
+    "mcp_server/online_tech_inference.py",
+    "mcp_server/hiring_classifier.py",
+    "mcp_server/mcp_inspector.py",
+    "mcp_server/server.py",
+]

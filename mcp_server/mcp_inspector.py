@@ -6,10 +6,10 @@ This wrapper ensures the server starts using the same Python environment used to
 invoke this command (e.g., via `uv run mcp-inspect-server`). It requires Node.js
 and `npx` to be available on PATH.
 """
+import os
+import shutil
 import subprocess
 import sys
-import shutil
-import os
 
 
 def main() -> int:
