@@ -44,3 +44,28 @@ exclude = '''
     /mcp_server/hiring_classifier\.py
 )
 '''
+
+[tool.isort]
+profile = "black"
+line_length = 120
+known_first_party = ["mcp_server"]
+src_paths = ["."]
+extend_skip = [
+    "mcp_server/complexity_scorer.py",
+    "mcp_server/software_complexity_scorer.py",
+    "mcp_server/online_tech_inference.py",
+    "mcp_server/hiring_classifier.py",
+    "mcp_server/mcp_inspector.py",
+    "mcp_server/server.py",
+]
+
+[tool.isort]
+profile = "black"
+line_length = 120
+known_first_party = ["mcp_server"]
+extend_skip = [
+    "mcp_server/complexity_scorer.py",
+    "mcp_server/software_complexity_scorer.py",
+    "mcp_server/online_tech_inference.py",
+    "mcp_server/hiring_classifier.py",
+]

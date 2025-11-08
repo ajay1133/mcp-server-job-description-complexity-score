@@ -17,8 +17,8 @@ from typing import List
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from mcp.server.fastmcp import FastMCP  # noqa: E402
-from mcp_server.software_complexity_scorer import SoftwareComplexityScorer  # noqa: E402
 
+from mcp_server.software_complexity_scorer import SoftwareComplexityScorer  # noqa: E402
 
 scorer = SoftwareComplexityScorer()
 
