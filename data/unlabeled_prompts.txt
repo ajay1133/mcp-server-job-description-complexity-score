@@ -1,0 +1,33 @@
+Sample unlabeled prompts for active learning hiring classifier.
+One prompt per line, plain text or JSONL with "text" field.
+
+Build a marketplace web app with React, Node, and Postgres
+Looking for a senior backend engineer with 5+ years Node.js experience
+Create a mobile app with React Native for iOS and Android
+Need a full-stack developer who knows Django and Vue.js
+Develop an e-commerce platform with Stripe integration
+Hiring: data scientist with Python, ML, and SQL skills
+Build authentication system with JWT and OAuth
+Job opening: DevOps engineer experienced in AWS and Kubernetes
+Implement real-time chat with WebSocket and Redis
+Seeking frontend developer proficient in TypeScript and React
+Refactor monolith to microservices architecture
+Remote position: QA automation engineer
+Add AI-powered search using vector database
+Full-time role for mobile developer (Flutter/Swift)
+Create recommendation engine with collaborative filtering
+Apply now: cloud architect with Azure certification
+Build CI/CD pipeline with GitHub Actions and Docker
+Looking for part-time graphic designer
+Develop admin dashboard with analytics and reporting
+Immediate joiner: software engineer with 3+ years Java
+Integrate payment gateway and subscription billing
+Candidate must have: experience in distributed systems
+Set up monitoring with Prometheus and Grafana
+Job description: technical lead for platform team
+Migrate database from MySQL to PostgreSQL
+We are hiring: senior ML engineer for NLP projects
+Build RESTful API with FastAPI and PostgreSQL
+Requirements: strong CS fundamentals and system design
+Create mobile-first progressive web app
+Seeking: security engineer with penetration testing skills

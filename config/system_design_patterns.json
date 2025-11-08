@@ -1,0 +1,440 @@
+{
+  "_comment": "Comprehensive system design patterns for standard applications based on industry best practices",
+  "_sources": [
+    "Public system design interview resources",
+    "Common architectural patterns for scale",
+    "Standard tech stacks for major application types"
+  ],
+  
+  "application_patterns": {
+    "twitter_clone": {
+      "description": "Twitter/X-like microblogging platform with timeline, follows, tweets, media",
+      "keywords": ["twitter", "x.com", "tweet", "microblog", "timeline", "social feed"],
+      "microservices": [
+        "api-gateway",
+        "user-service",
+        "auth-service",
+        "tweet-service",
+        "timeline-service",
+        "follow-service",
+        "notification-service",
+        "media-service",
+        "search-service",
+        "analytics-service"
+      ],
+      "technologies": {
+        "frontend": ["react", "redux", "typescript"],
+        "backend": ["node", "python_fastapi", "golang"],
+        "database": ["postgres", "cassandra"],
+        "cache": ["redis", "memcached"],
+        "storage": ["s3", "cdn"],
+        "message_queue": ["kafka", "rabbitmq"],
+        "search": ["elasticsearch"],
+        "monitoring": ["prometheus", "grafana"],
+        "infrastructure": ["kubernetes", "docker", "nginx"]
+      },
+      "architecture_notes": [
+        "Read-heavy workload: Heavy caching with Redis for timeline/user data",
+        "Timeline: Fanout-on-write for small follows, fanout-on-read for celebrities",
+        "Media: S3 for storage, CDN (CloudFront) for delivery",
+        "Database: Postgres for user/relationships, Cassandra for tweets/timeline",
+        "Real-time: WebSocket for notifications, message queue for async tasks",
+        "Search: Elasticsearch for full-text tweet search",
+        "Scale: Load balancers, horizontal scaling, sharding"
+      ]
+    },
+    
+    "instagram_clone": {
+      "description": "Instagram-like photo/video sharing platform with feed, stories, likes, comments",
+      "keywords": ["instagram", "insta", "photo sharing", "photo social", "image social", "stories"],
+      "microservices": [
+        "api-gateway",
+        "user-service",
+        "auth-service",
+        "media-service",
+        "feed-service",
+        "follow-service",
+        "notification-service",
+        "comment-service",
+        "like-service",
+        "story-service",
+        "search-service",
+        "recommendation-service"
+      ],
+      "technologies": {
+        "frontend": ["react", "react_native", "typescript"],
+        "backend": ["python_django", "python_fastapi", "golang"],
+        "database": ["postgres", "cassandra"],
+        "cache": ["redis"],
+        "storage": ["s3", "cdn"],
+        "message_queue": ["kafka"],
+        "search": ["elasticsearch"],
+        "image_processing": ["pillow", "imagemagick", "lambda"],
+        "monitoring": ["prometheus", "datadog"],
+        "infrastructure": ["kubernetes", "docker", "nginx"]
+      },
+      "architecture_notes": [
+        "Media-heavy: S3 for original images, CDN for delivery, image processing pipeline",
+        "Multiple resolutions: Generate thumbnails, optimized versions on upload",
+        "Feed: Similar to Twitter but more media-focused, Redis cache critical",
+        "Stories: TTL-based ephemeral content (24h), separate storage strategy",
+        "Real-time: WebSocket for likes/comments updates",
+        "Database: Postgres for users/relationships, Cassandra for feed/activity",
+        "Recommendation: ML service for explore feed, personalized content"
+      ]
+    },
+    
+    "youtube_clone": {
+      "description": "YouTube-like video streaming platform with upload, transcode, playback, recommendations",
+      "keywords": ["youtube", "video streaming", "video platform", "video share", "vimeo"],
+      "microservices": [
+        "api-gateway",
+        "user-service",
+        "auth-service",
+        "video-upload-service",
+        "transcoding-service",
+        "video-metadata-service",
+        "streaming-service",
+        "comment-service",
+        "recommendation-service",
+        "search-service",
+        "analytics-service",
+        "notification-service"
+      ],
+      "technologies": {
+        "frontend": ["react", "video_js", "typescript"],
+        "backend": ["python_fastapi", "golang", "node"],
+        "database": ["postgres", "mongodb"],
+        "cache": ["redis", "memcached"],
+        "storage": ["s3", "cdn"],
+        "message_queue": ["kafka"],
+        "search": ["elasticsearch"],
+        "video_processing": ["ffmpeg", "lambda", "ecs"],
+        "streaming": ["hls", "dash", "cloudfront"],
+        "monitoring": ["prometheus", "cloudwatch"],
+        "infrastructure": ["kubernetes", "docker", "nginx"]
+      },
+      "architecture_notes": [
+        "Video pipeline: Upload -> S3 -> Transcoding queue -> Multiple resolutions -> CDN",
+        "Transcoding: FFmpeg in worker containers, multiple bitrates (360p-4K)",
+        "Streaming: HLS/DASH adaptive bitrate streaming via CDN",
+        "Storage: S3 for videos (massive scale), separate buckets for raw/processed",
+        "Database: Postgres for metadata, Redis for view counts/trending",
+        "Recommendation: ML-based recommendation engine, user history analysis",
+        "Search: Elasticsearch for video search with autocomplete",
+        "Scale: CDN critical for bandwidth, multi-region S3 replication"
+      ]
+    },
+    
+    "whatsapp_clone": {
+      "description": "WhatsApp-like messaging app with real-time chat, media sharing, E2E encryption",
+      "keywords": ["whatsapp", "messaging app", "chat app", "instant messaging", "e2e encryption"],
+      "microservices": [
+        "api-gateway",
+        "user-service",
+        "auth-service",
+        "message-service",
+        "group-service",
+        "media-service",
+        "notification-service",
+        "presence-service",
+        "encryption-service"
+      ],
+      "technologies": {
+        "frontend": ["react_native", "swift", "kotlin"],
+        "backend": ["erlang", "golang", "node"],
+        "database": ["postgres", "cassandra"],
+        "cache": ["redis"],
+        "storage": ["s3"],
+        "message_queue": ["kafka"],
+        "real_time": ["websocket", "xmpp"],
+        "encryption": ["signal_protocol", "e2e_encryption"],
+        "monitoring": ["prometheus"],
+        "infrastructure": ["kubernetes", "docker"]
+      },
+      "architecture_notes": [
+        "Real-time: WebSocket connections for instant message delivery",
+        "E2E encryption: Signal protocol, keys stored on client only",
+        "Database: Cassandra for message history (write-heavy), Redis for online status",
+        "Media: S3 for images/videos/voice, E2E encrypted before upload",
+        "Presence: Redis-based tracking of online/last-seen status",
+        "Groups: Separate handling for broadcast vs group chats",
+        "Delivery: Message queue for offline message delivery",
+        "Scale: Minimal server processing, most logic on client"
+      ]
+    },
+    
+    "uber_clone": {
+      "description": "Uber-like ride-hailing platform with real-time tracking, matching, payments",
+      "keywords": ["uber", "ride hailing", "taxi app", "ride sharing", "lyft"],
+      "microservices": [
+        "api-gateway",
+        "user-service",
+        "driver-service",
+        "auth-service",
+        "ride-matching-service",
+        "location-service",
+        "trip-service",
+        "payments-service",
+        "notification-service",
+        "pricing-service",
+        "analytics-service",
+        "fraud-detection-service"
+      ],
+      "technologies": {
+        "frontend": ["react_native", "swift", "kotlin"],
+        "backend": ["golang", "python_fastapi", "node"],
+        "database": ["postgres", "cassandra"],
+        "cache": ["redis"],
+        "geospatial": ["redis_geo", "postgis", "elasticsearch"],
+        "maps": ["google_maps", "mapbox"],
+        "message_queue": ["kafka"],
+        "real_time": ["websocket"],
+        "payments": ["stripe"],
+        "monitoring": ["prometheus", "datadog"],
+        "infrastructure": ["kubernetes", "docker"]
+      },
+      "architecture_notes": [
+        "Geospatial: Redis GeoHash for nearby driver matching",
+        "Real-time: WebSocket for live location updates, ETA calculations",
+        "Matching algorithm: Optimize for distance, driver rating, ETA",
+        "Database: Postgres for trips/users, Cassandra for location history",
+        "Pricing: Dynamic surge pricing based on supply/demand",
+        "Payments: Stripe integration with retry/reconciliation logic",
+        "Maps: Google Maps/Mapbox for routing, ETAs, geocoding",
+        "Scale: Sharding by geographic region, separate deployments per city"
+      ]
+    },
+    
+    "netflix_clone": {
+      "description": "Netflix-like video streaming platform with subscriptions, recommendations, content delivery",
+      "keywords": ["netflix", "streaming service", "vod", "video on demand", "ott platform"],
+      "microservices": [
+        "api-gateway",
+        "user-service",
+        "auth-service",
+        "subscription-service",
+        "content-metadata-service",
+        "streaming-service",
+        "recommendation-service",
+        "search-service",
+        "billing-service",
+        "analytics-service",
+        "notification-service"
+      ],
+      "technologies": {
+        "frontend": ["react", "typescript"],
+        "backend": ["python_fastapi", "golang", "java_spring"],
+        "database": ["postgres", "cassandra"],
+        "cache": ["redis", "memcached"],
+        "storage": ["s3", "cdn"],
+        "message_queue": ["kafka"],
+        "search": ["elasticsearch"],
+        "video_processing": ["ffmpeg"],
+        "streaming": ["hls", "dash"],
+        "ml": ["tensorflow", "pytorch"],
+        "monitoring": ["prometheus", "grafana"],
+        "infrastructure": ["kubernetes", "docker", "aws"]
+      },
+      "architecture_notes": [
+        "CDN-heavy: Global CDN for video delivery, edge caching",
+        "Recommendation: Sophisticated ML models for personalization",
+        "Adaptive streaming: Multiple bitrates based on network conditions",
+        "Subscription: Recurring billing, payment retry logic",
+        "Content: Multi-region replication for low latency",
+        "Database: Cassandra for viewing history, Redis for session data",
+        "Analytics: Track every user interaction for recommendations"
+      ]
+    },
+    
+    "airbnb_clone": {
+      "description": "Airbnb-like marketplace for property rentals with search, booking, payments",
+      "keywords": ["airbnb", "rental marketplace", "booking platform", "vacation rental"],
+      "microservices": [
+        "api-gateway",
+        "user-service",
+        "auth-service",
+        "listing-service",
+        "search-service",
+        "booking-service",
+        "payments-service",
+        "review-service",
+        "notification-service",
+        "calendar-service",
+        "pricing-service",
+        "fraud-detection-service"
+      ],
+      "technologies": {
+        "frontend": ["react", "nextjs", "typescript"],
+        "backend": ["ruby_rails", "python_django", "golang"],
+        "database": ["postgres", "mysql"],
+        "cache": ["redis"],
+        "storage": ["s3", "cdn"],
+        "search": ["elasticsearch"],
+        "geospatial": ["postgis", "elasticsearch"],
+        "message_queue": ["kafka"],
+        "payments": ["stripe"],
+        "monitoring": ["datadog", "prometheus"],
+        "infrastructure": ["kubernetes", "docker", "aws"]
+      },
+      "architecture_notes": [
+        "Search: Elasticsearch with geospatial queries, filters (price, dates, amenities)",
+        "Calendar: Complex availability management, booking conflicts",
+        "Payments: Escrow system, host payout scheduling",
+        "Reviews: Two-way review system (host and guest)",
+        "Pricing: Dynamic pricing recommendations, seasonal adjustments",
+        "Images: S3 + CDN for property photos, image optimization",
+        "Booking: Transaction management, cancellation policies"
+      ]
+    },
+    
+    "shopify_ecommerce": {
+      "description": "E-commerce platform with product catalog, cart, checkout, inventory",
+      "keywords": ["ecommerce", "e-commerce", "online store", "shop", "marketplace", "shopify"],
+      "microservices": [
+        "api-gateway",
+        "user-service",
+        "auth-service",
+        "catalog-service",
+        "cart-service",
+        "order-service",
+        "payments-service",
+        "inventory-service",
+        "shipping-service",
+        "notification-service",
+        "review-service",
+        "analytics-service"
+      ],
+      "technologies": {
+        "frontend": ["react", "nextjs", "vue"],
+        "backend": ["node", "python_fastapi", "ruby_rails"],
+        "database": ["postgres", "mysql"],
+        "cache": ["redis"],
+        "storage": ["s3", "cdn"],
+        "search": ["elasticsearch"],
+        "message_queue": ["rabbitmq", "kafka"],
+        "payments": ["stripe", "paypal"],
+        "monitoring": ["prometheus"],
+        "infrastructure": ["kubernetes", "docker"]
+      },
+      "architecture_notes": [
+        "Catalog: Elasticsearch for product search, faceted filters",
+        "Cart: Redis for session-based cart, expiration handling",
+        "Inventory: Real-time stock management, reservation system",
+        "Checkout: Multi-step flow, address validation, tax calculation",
+        "Payments: Multiple gateway support, PCI compliance",
+        "Orders: State machine for order lifecycle, fulfillment tracking",
+        "CDN: Product images, static assets"
+      ]
+    },
+    
+    "slack_clone": {
+      "description": "Slack-like team collaboration platform with channels, DMs, file sharing",
+      "keywords": ["slack", "team chat", "collaboration tool", "workspace chat", "discord"],
+      "microservices": [
+        "api-gateway",
+        "user-service",
+        "auth-service",
+        "workspace-service",
+        "channel-service",
+        "message-service",
+        "thread-service",
+        "file-service",
+        "search-service",
+        "notification-service",
+        "presence-service",
+        "integration-service"
+      ],
+      "technologies": {
+        "frontend": ["react", "electron", "typescript"],
+        "backend": ["node", "golang", "python_fastapi"],
+        "database": ["postgres", "mysql"],
+        "cache": ["redis"],
+        "storage": ["s3"],
+        "search": ["elasticsearch"],
+        "message_queue": ["kafka"],
+        "real_time": ["websocket"],
+        "monitoring": ["prometheus"],
+        "infrastructure": ["kubernetes", "docker"]
+      },
+      "architecture_notes": [
+        "Real-time: WebSocket for instant message delivery, typing indicators",
+        "Search: Elasticsearch for message/file search across workspace",
+        "Threading: Nested message structure, conversation context",
+        "Files: S3 storage, preview generation, virus scanning",
+        "Presence: Redis for online status, active channel tracking",
+        "Channels: Public/private, workspace-scoped permissions",
+        "Integrations: Webhook support, bot framework, OAuth apps"
+      ]
+    },
+    
+    "tiktok_clone": {
+      "description": "TikTok-like short-form video platform with feed, recommendations, social features",
+      "keywords": ["tiktok", "short video", "reels", "video feed", "social video"],
+      "microservices": [
+        "api-gateway",
+        "user-service",
+        "auth-service",
+        "video-service",
+        "transcoding-service",
+        "feed-service",
+        "recommendation-service",
+        "like-service",
+        "comment-service",
+        "follow-service",
+        "notification-service",
+        "search-service",
+        "analytics-service"
+      ],
+      "technologies": {
+        "frontend": ["react_native", "swift", "kotlin"],
+        "backend": ["golang", "python_fastapi", "java_spring"],
+        "database": ["postgres", "cassandra"],
+        "cache": ["redis"],
+        "storage": ["s3", "cdn"],
+        "message_queue": ["kafka"],
+        "video_processing": ["ffmpeg"],
+        "ml": ["tensorflow", "pytorch"],
+        "search": ["elasticsearch"],
+        "monitoring": ["prometheus"],
+        "infrastructure": ["kubernetes", "docker"]
+      },
+      "architecture_notes": [
+        "Feed algorithm: ML-driven recommendation engine (For You Page)",
+        "Video: Short-form optimized, aggressive CDN caching",
+        "Transcoding: Fast processing, multiple resolutions",
+        "Real-time: WebSocket for live view/like counts",
+        "Social graph: Follow relationships, trending detection",
+        "Analytics: Track engagement metrics for algorithm training",
+        "CDN: Critical for video delivery, edge caching"
+      ]
+    }
+  },
+  
+  "infrastructure_components": {
+    "cache_layer": {
+      "technologies": ["redis", "memcached"],
+      "use_cases": ["session management", "API response caching", "rate limiting", "leaderboards"]
+    },
+    "cdn": {
+      "technologies": ["cloudfront", "cloudflare", "fastly"],
+      "use_cases": ["static asset delivery", "image/video streaming", "DDoS protection"]
+    },
+    "load_balancer": {
+      "technologies": ["nginx", "haproxy", "aws_alb"],
+      "use_cases": ["traffic distribution", "SSL termination", "health checks"]
+    },
+    "message_queue": {
+      "technologies": ["kafka", "rabbitmq", "sqs"],
+      "use_cases": ["async processing", "event streaming", "decoupling services"]
+    },
+    "monitoring": {
+      "technologies": ["prometheus", "grafana", "datadog", "cloudwatch"],
+      "use_cases": ["metrics collection", "alerting", "log aggregation", "APM"]
+    },
+    "container_orchestration": {
+      "technologies": ["kubernetes", "docker", "ecs"],
+      "use_cases": ["service deployment", "auto-scaling", "service discovery"]
+    }
+  }
+}

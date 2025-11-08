@@ -1,13 +1,267 @@
 # MCP Complexity Scorer
 
-An MCP (Model Context Protocol) server that predicts the complexity of programming tasks and job requirements using a machine learning model. Scores are calibrated around a baseline of 100 (roughly “Replit Agent 3” difficulty) and include estimated completion time.
+**⚠️ DEPRECATION NOTICE**: The original `ComplexityScorer` (multi-profession with online search) is **deprecated**. Use the new **SoftwareComplexityScorer** for software-only requirements. See [SOFTWARE_SCORER.md](SOFTWARE_SCORER.md) for migration guide.
 
-## Features
+---
+
+## Software-only complexity scorer (recommended)
+
+If you want to score only software/computer requirements and avoid any profession lookup or online-search heuristics, use `SoftwareComplexityScorer`.
+
+What it does:
+- Detects whether a prompt is software-related (model-based, not hardcoded keywords)
+- Predicts technologies involved (multi-label)
+- **NEW**: Recognizes standard application patterns (Twitter, Instagram, YouTube, WhatsApp, Uber, etc.)
+- **NEW**: Infers comprehensive technology stacks based on industry best practices
+- **NEW**: Suggests complete microservice architectures for known patterns
+- Estimates lines of code and manual coding hours
+- Computes a complexity score (either via a trained regressor or a heuristic from LOC/tech)
+- Estimates time with AI assistance and lists useful tools to accelerate delivery
+- Returns an error when the prompt is not a software job
+
+### System Design Pattern Recognition
+
+The scorer now includes a comprehensive knowledge base of 10+ standard applications:
+
+**Supported Patterns**:
+- **Twitter Clone**: Microblogging with feeds, tweets, real-time updates
+- **Instagram Clone**: Photo/video sharing with stories, feeds, likes
+- **YouTube Clone**: Video streaming with upload, transcoding, CDN
+- **WhatsApp Clone**: Messaging with E2E encryption, real-time delivery
+- **Uber Clone**: Ride-hailing with geospatial, matching, payments
+- **Netflix Clone**: Video streaming with subscriptions, recommendations
+- **Airbnb Clone**: Rental marketplace with search, booking, reviews
+- **E-commerce/Shopify**: Online store with cart, checkout, inventory
+- **Slack Clone**: Team collaboration with channels, DMs, file sharing
+- **TikTok Clone**: Short-form video with ML-driven feed algorithm
+
+When you request a pattern (e.g., "Build a Twitter clone"), the scorer automatically:
+1. Detects 10-13 microservices (not just 2-3)
+2. Infers 15-22 technologies including infrastructure (Redis, Kafka, CDN, S3, Elasticsearch, etc.)
+3. Provides accurate time estimates reflecting full system complexity
+4. Shows which pattern was matched in enrichment metadata
+
+**Example**:
+```bash
+Input: "Build a Twitter clone with feed and real-time updates"
+Output:
+  - 12 microservices: api-gateway, user-service, auth-service, tweet-service, 
+                      timeline-service, follow-service, notification-service,
+                      media-service, search-service, analytics-service, etc.
+  - 22 technologies: React, Node, Postgres, Cassandra, Redis, S3, CDN, Kafka,
+                     Elasticsearch, Nginx, Docker, Kubernetes, monitoring, etc.
+  - Time: 66.7h manual, 23.3h AI-assisted
+  - Pattern: twitter_clone
+```
+
+See [SYSTEM_DESIGN_INTEGRATION.md](SYSTEM_DESIGN_INTEGRATION.md) for complete documentation.
+
+Train models:
+
+```powershell
+python train_software_models.py --data data\software_training_data.example.jsonl --out models\software
+```
+
+Use in code:
+
+```python
+from mcp_server.software_complexity_scorer import SoftwareComplexityScorer
+
+scorer = SoftwareComplexityScorer(model_dir="models/software")
+result = scorer.analyze_text("Build a React dashboard with Stripe payments")
+if result.get("ok"):
+  print(result["complexity_score"], result["technologies"], result["predicted_hours_with_ai"])
+else:
+  print("ERROR:", result["error"])  # Non-software prompts will return an error
+```
+
+Notes:
+- The example dataset (`data/software_training_data.example.jsonl`) is illustrative only; curate your own data for best results.
+- This scorer does not use any online search and does not output non-software professions.
+- See [SOFTWARE_SCORER.md](SOFTWARE_SCORER.md) for detailed training guide, tech ontology, and usage examples.
+
+### No hardcoded keywords: training pipeline
+
+To avoid keyword heuristics entirely and build a robust ML dataset, use the multi-source + active learning workflow:
+
+1) Bootstrap a tiny seed set (no templates)
+
+```powershell
+python bootstrap_training_data.py
+```
+
+2) Collect unlabeled, mixed-domain text (no filters)
+
+```powershell
+python collect_unlabeled_data.py --limit 200
+```
+
+3) Active learning: label only uncertain examples efficiently
+
+```powershell
+python active_learning_loop.py
+```
+
+4) (Optional) Analyze real GitHub repos for actual LOC/tech/hours
+
+```powershell
+python analyze_github_repos.py
+```
+
+5) Merge all sources and de-duplicate by text
+
+```powershell
+python merge_training_data.py --out data\merged_training_data.jsonl
+```
+
+6) Train models on merged dataset
+
+```powershell
+python train_software_models.py --data data\merged_training_data.jsonl --out models\software
+```
+
+7) Validate and run server
+
+```powershell
+python test_new_schema.py
+python mcp_server\server.py --self-test
+python mcp_server\server.py  # long-running MCP server
+```
+
+### Training with System Design Patterns (Recommended)
+
+**NEW**: Generate high-quality training data from system design patterns:
+
+```powershell
+# 1. Generate training data from patterns (47 examples covering 10 major apps)
+python generate_training_from_patterns.py --output data/training_from_patterns.jsonl
+
+# 2. Merge with existing data
+python merge_training_data.py --inputs data/training_from_patterns.jsonl data/software_training_data.jsonl --out data/merged_training_data.jsonl
+
+# 3. Train models with enriched dataset
+python train_software_models.py --data data/merged_training_data.jsonl --out models/software
+
+# 4. Test the improved models
+python run_requirements_cli.py --text "Build a Twitter clone with real-time feeds"
+```
+
+This approach uses the comprehensive system design knowledge base to generate realistic training examples for:
+- Twitter, Instagram, YouTube, WhatsApp, Uber, Netflix, Airbnb, E-commerce, Slack, TikTok patterns
+- Comprehensive tech stacks (15-22 technologies per example)
+- Production-ready microservice architectures (10-15 services)
+- Accurate complexity estimates (500-1200 hours for platforms)
+
+See [AI_MODEL_TRAINING_SUMMARY.md](AI_MODEL_TRAINING_SUMMARY.md) for complete details.
+
+### Current Status
+
+✅ **Models trained with system design knowledge** - Ready to use!
+
+- **401 training examples** (pattern-based + existing data)
+- **49 technology labels** (including infrastructure: kafka, redis, docker, cdn, monitoring, etc.)
+- **10 application patterns** recognized (Twitter, YouTube, Uber, etc.)
+- **Production-ready** architecture recommendations
+
+**Test the system**:
+   ```bash
+   python test_software_scorer.py
+   ```
+
+The MCP server (`server.py`) is already configured to use `SoftwareComplexityScorer` but will fail until models are trained.
+
+### Optional: Hiring vs Build classifier (binary)
+
+To cleanly separate output schemas for job descriptions vs build requirements, you can train a small binary classifier:
+
+Dataset (JSONL): one object per line with fields `{ "text": str, "label": int }` where `label=1` for hiring/job-description and `label=0` for build/implementation. An example is in `data/hiring_build_training_data.example.jsonl`.
+
+Train (PowerShell):
+
+```powershell
+$env:HIRING_BUILD_DATA = "data/hiring_build_training_data.jsonl"
+python train_hiring_classifier.py
+```
+
+This writes `models/software/hiring_build_classifier.joblib`. When present, `SoftwareComplexityScorer` will use it to detect hiring prompts with confidence thresholds (>=0.65 → hiring, <=0.35 → build) and fall back to the existing heuristic when confidence is low.
+
+Recommended: curate ~500–1,000 labeled examples for good separation. You can bootstrap with heuristics and then hand-correct.
+
+#### Workflow: evaluation, active learning, and threshold tuning
+
+**1. Evaluate classifier vs heuristic baseline:**
+
+After training with at least 100–200 examples, measure performance:
+
+```powershell
+$env:HIRING_BUILD_DATA = "data/hiring_build_training_data.jsonl"
+python evaluate_hiring_classifier.py --test-size 0.2
+```
+
+This generates:
+- Precision/recall/F1 report for model and heuristic
+- `logs/hiring_classifier_pr_curve.png` and `logs/hiring_classifier_roc_curve.png`
+- `logs/hiring_classifier_evaluation.json` with AUC, AP, recommended thresholds
+
+**2. Active learning to grow dataset efficiently:**
+
+Surface uncertain examples (probabilities 0.35–0.65) for manual labeling:
+
+```powershell
+python active_learning_hiring.py --unlabeled data/unlabeled_prompts.txt --limit 50 --out data/uncertain_samples.jsonl
+```
+
+Manually edit `data/uncertain_samples.jsonl` to add `"label": 0` or `"label": 1`, then merge:
+
+```powershell
+type data\hiring_build_training_data.jsonl data\uncertain_samples.jsonl > data\merged.jsonl
+$env:HIRING_BUILD_DATA = "data\merged.jsonl"
+python train_hiring_classifier.py
+```
+
+**3. Tune decision threshold to minimize misclassification cost:**
+
+If false negatives (hiring → build) are more expensive than false positives (build → hiring), tune the threshold:
+
+```powershell
+python tune_hiring_threshold.py --data data/hiring_build_training_data.jsonl --cost-fp 1.0 --cost-fn 2.0 --write-config
+```
+
+This finds the optimal threshold and writes it to `config/hiring_threshold.json`. Update `_predict_is_hiring` in the scorer to use the new threshold (default is 0.65 for hiring, 0.35 for build).
+
+Example: if tuning suggests 0.72 for hiring, change:
+```python
+if proba >= 0.72:  # was 0.65
+    return True, proba, "model"
+```
+
+**Iterative improvement loop:**
+
+1. Train initial model with ~100 examples
+2. Evaluate and identify weak areas
+3. Use active learning to label uncertain examples
+4. Retrain with expanded data
+5. Tune threshold for production cost function
+6. Repeat until precision/recall targets are met
+
+---
+
+## Legacy Multi-Profession Scorer (deprecated)
+
+The original `ComplexityScorer` handled both software and non-software jobs with online search heuristics and profession categorization. This approach is being phased out.
+
+An MCP (Model Context Protocol) server that predicts the complexity of programming tasks and job requirements using a machine learning model. Scores are calibrated around a baseline of 100 (roughly "Replit Agent 3" difficulty) and include estimated completion time.
+
+### Features (legacy scorer)
 
 - ML-based predictions for complexity score and time-to-complete
 - Calibrated scoring (baseline 100) with human-friendly difficulty labels
 - Detected factor hints (frontend, backend, database, real-time, etc.)
 - Time estimates in hours/days/weeks with uncertainty range
+- **Duration extraction**: Automatically detects time requirements from user prompts (e.g., "couple of days", "3 weeks")
+- **Smart time calculation**: Distinguishes between project deadlines (8-hour workdays) and continuous care (24/7)
+- **Job categorization**: Automatically deduces job category and sub-category from requirements
+- **Extended profession database**: Falls back to comprehensive profession database (100+ professions) when primary categorization fails
 - MCP tool integration for assistants that support MCP
 
 ## Prerequisites
@@ -43,6 +297,12 @@ An MCP (Model Context Protocol) server that predicts the complexity of programmi
 Models are not committed; you must train locally before use:
 
 ```powershell
+uv run train-model
+```
+
+Alternative:
+
+```powershell
 python train_model.py
 ```
 
@@ -56,7 +316,13 @@ This creates the following files under `models/`:
 Start the MCP server by running:
 
 ```powershell
-python mcp_server/server.py
+uv run mcp-server
+```
+
+Alternative:
+
+```powershell
+python -m mcp_server.server
 ```
 
 If models are missing, the server will warn you to run `train_model.py` first.
@@ -102,12 +368,6 @@ See the time estimation feature in action:
 uv run demo
 ```
 
-Fallback (without uv scripts):
-
-```powershell
-uv run demo_time_estimation.py
-```
-
 This prints several examples from simple to expert-level and shows predicted time ranges.
 
 ## MCP Tool: `score_complexity`
@@ -124,6 +384,9 @@ A dictionary containing:
 - `detected_factors`: Map of factors and relevance signals (e.g., matches, relevance)
 - `task_size`: simple | moderate | complex | very_complex | expert
 - `difficulty_rating`: Human-friendly description
+- `job_category`: Deduced job category (e.g., "Software Developer", "Doctor", "Plumber")
+- `job_sub_category`: Deduced job specialization (e.g., "Full Stack Developer (React + Node.js)", "Gastroenterologist", "General Plumber")
+- `category_lookup_method`: How the category was determined - "primary_pattern", "extended_database", "online_search", or "default_fallback"
 - `estimated_completion_time`: Object with `hours`, `days`, `weeks`, `best_estimate`, `time_range`, `assumptions`
 - `summary`: Brief summary including time
 - `model_type`: Always `"machine_learning"` for this version
@@ -147,15 +410,18 @@ A dictionary containing:
   },
   "task_size": "complex",
   "difficulty_rating": "Similar to Replit Agent 3 capabilities",
+  "job_category": "Software Developer",
+  "job_sub_category": "Backend Developer",
+  "category_lookup_method": "primary_pattern",
   "estimated_completion_time": {
     "hours": 9.1,
     "days": 1.14,
     "weeks": 0.23,
     "best_estimate": "1.1 days",
     "time_range": "1.1-1.4 days",
-    "assumptions": "Assumes developer skilled in using AI coding agents like Replit"
+    "assumptions": "Time estimate based on task complexity and typical completion times for similar requirements"
   },
-  "summary": "Complexity score: 109.80. Primary complexity factors: database, api integration, security. Estimated completion time: 1.1 days.",
+  "summary": "Complexity score: 109.80. Complex task. Primary complexity factors: database, api integration, security. Estimated completion time: 1.1 days.",
   "model_type": "machine_learning"
 }
 ```
@@ -175,6 +441,170 @@ The model reports hints for the following factor categories (non-exhaustive exam
 - Security: Auth, encryption, JWT, RBAC
 - Testing: Unit, integration, E2E, coverage
 - Scalability: Caching, queues, load balancing, distributed systems
+
+### Configure factor categories (no hardcoded lists)
+
+You can customize the factor categories without code changes:
+
+- Edit `config/complexity_factors.json` to add/remove categories or keywords
+- Or set `MCP_COMPLEXITY_FACTORS` to point to a custom JSON file
+- Or pass a mapping directly when constructing the scorer: `ComplexityScorer(complexity_factors=...)`
+
+If no config is found, sensible built-in defaults are used.
+
+## Job Categorization
+
+The scorer automatically deduces the job category and sub-category from the requirement text. This feature works for both software development roles and general professions.
+
+### Supported Categories
+
+**Software Development:**
+- Full Stack Developer (React + Node.js, Vue.js, Angular, MERN Stack)
+- Frontend Developer (React, Vue, Angular)
+- Backend Developer (Node.js, Django, Flask, FastAPI)
+- Mobile Developer (React Native, Flutter, iOS, Android)
+- AI/ML Developer
+- Data Scientist
+- DevOps Engineer
+
+**Healthcare:**
+- Doctor (Gastroenterologist, Cardiologist, Neurologist, Orthopedic Surgeon, Dermatologist, Pediatrician, Ophthalmologist, General Physician)
+- Nurse (Registered Nurse, Licensed Practical Nurse)
+
+**Trades & Services:**
+- Plumber (Emergency Plumber, General Plumber)
+- Electrician
+- Carpenter
+
+**Child & Home Care:**
+- Child Care Provider (Nanny, Babysitter, Child Care Specialist)
+- Housekeeper
+- **Caregiver** (Home Health Aide, Home Health Aide with Housekeeping)
+
+**Professional Services:**
+- Lawyer (Criminal Defense, Corporate, General Practice)
+- Teacher (Mathematics, Science, Language Arts)
+- Accountant (CPA, General)
+- Driver (Ride-share, Commercial, Personal)
+
+**Extended Professions** (100+ supported via fallback database):
+- Medical: Veterinarian, Dentist, Therapist, Psychologist, Pharmacist, Paramedic
+- Creative: Photographer, Videographer, Graphic Designer, Writer, Musician, Artist
+- Culinary: Chef, Cook, Baker, Bartender
+- Trades: Mechanic, HVAC Technician, Welder, Mason, Roofer, Painter
+- Services: Hairdresser, Barber, Massage Therapist, Personal Trainer
+- Real Estate: Architect, Engineer, Surveyor, Contractor, Realtor
+- Business: Consultant, Analyst, Banker, Broker
+- Security: Security Guard, Firefighter, Police Officer
+- Transportation: Pilot, Flight Attendant, Delivery Driver
+- Agriculture: Farmer, Gardener, Landscaper, Florist
+- And many more...
+
+### Example Job Category Deductions
+
+| Requirement | Job Category | Job Sub-Category |
+|-------------|--------------|------------------|
+| "I need a software developer who can develop a video streaming application in React Js and Node Js" | Software Developer | Full Stack Developer (React + Node.js) |
+| "I have problems with my liver" | Doctor | Gastroenterologist |
+| "I need someone who can look at my child while I am gone for work" | Child Care Provider | Child Care Specialist |
+| "Looking for a data scientist with machine learning experience" | Data Scientist | Machine Learning Specialist |
+| "Need a mobile app developer for iOS and Android using Flutter" | Software Developer | Mobile Developer (Flutter) |
+| "I need someone to look after my dad, he can barely walk due to diabetes and cannot cook his meals" | Caregiver | Home Health Aide with Housekeeping |
+
+## Category Lookup Method
+
+The `category_lookup_method` field tracks how the job category was determined, providing transparency and auditability.
+
+### Lookup Methods
+
+| Method | Description | Icon | Example |
+|--------|-------------|------|---------|
+| `primary_pattern` | Detected using primary pattern matching for common professions with context-aware subcategories | 🎯 | Software Developer → "Full Stack Developer (React + Node.js)" |
+| `extended_database` | Found in extended profession database containing 100+ professions across multiple domains | 📚 | Veterinarian, Photographer, Chef, Mechanic |
+| `online_search` | Retrieved via online keyword matching fallback when primary patterns and extended database don't match | 🌐 | Uncommon professions detected via action keywords (repair, design, install, etc.) |
+| `default_fallback` | No match found in any database or online search, using generic categorization | ❓ | Very uncommon or vague requirements |
+
+### Online Search Capability
+
+When the primary patterns and extended database fail to categorize a profession, the system automatically uses online search logic:
+
+**Triggers:**
+- When no primary pattern matches the requirement
+- When `detected_factors` is empty (no technical keywords found)
+- For default fallback cases before settling on "General Professional"
+
+**Search Strategy:**
+1. **Primary Search**: Attempts DuckDuckGo API instant answer lookup (when available)
+2. **Keyword Fallback**: Matches action-based keywords in the text:
+   - Action verbs: repair, fix, install, design, build, create, organize, plan, manage, coordinate, help, service
+   - Rare professions: sommelier, curator, librarian, auctioneer, appraiser, jeweler, locksmith, upholsterer, taxidermist, mortician, interpreter, translator, stenographer, actuary, statistician, meteorologist, geologist, astronomer, botanist, zoologist, ecologist
+
+**Examples:**
+- "I need someone to repair my antique clock" → `Repair Technician` (via "repair" keyword) ✅ online_search
+- "Need a sommelier for my restaurant" → `Sommelier` (via profession keyword) ✅ online_search
+- "Help me organize my event" → `Event Organizer` (via "organize" keyword) ✅ online_search
+- "I need to design a logo" → `Designer` (via "design" keyword) ✅ online_search
+
+### Usage
+
+The `category_lookup_method` field helps you:
+- **Track categorization performance**: See which method was used for each request
+- **Identify gaps**: Find professions frequently hitting extended database or fallback
+- **Audit accuracy**: Verify categorization logic is working as expected
+- **Improve coverage**: Add frequently-requested professions to primary patterns
+
+### Example
+
+```json
+{
+  "job_category": "Veterinarian",
+  "job_sub_category": "Animal Healthcare Professional",
+  "category_lookup_method": "extended_database"
+}
+```
+
+This indicates the profession was found in the extended database (Tier 2), not through primary pattern matching.
+
+## Duration Extraction
+
+The scorer automatically detects duration requirements mentioned in the user's prompt and adjusts time estimates accordingly.
+
+### Supported Duration Patterns
+
+**Numeric Patterns:**
+- "3 hours", "2 days", "4 weeks", "2 months"
+
+**Word-based Patterns:**
+- "couple of days" = 2 days
+- "few days" = 3 days
+- "couple of weeks" = 2 weeks
+- "weekend" = 2 days
+
+**Special Cases:**
+- "overnight" = 12 hours
+- "all day" / "full day" = 8 hours
+- "half day" = 4 hours
+
+### Project Deadlines vs Continuous Care
+
+The system intelligently distinguishes between:
+
+1. **Project Deadlines** (8-hour workdays):
+   - Detected when phrases like "needs to be done in", "deadline", "complete in" are present
+   - Example: "Build a React app, needs to be done in 3 days" = 24 work hours (3 days × 8 hours)
+
+2. **Continuous Care** (24/7):
+   - Applied to Caregiver, Nurse, Child Care Provider, Housekeeper categories
+   - Example: "Need someone to look after my dad for couple of days" = 48 hours (2 days × 24 hours)
+
+### Duration Extraction Examples
+
+| Prompt | Detected Duration | Job Category | Time Estimate |
+|--------|------------------|--------------|---------------|
+| "I need someone to look after my dad... I will be gone for a couple of days" | "couple of day" | Caregiver | 2.0 days (continuous care) |
+| "Build a React web app, needs to be done in 3 days" | "3 day" | Software Developer | 3.0 days |
+| "Need a babysitter for the weekend" | "weekend" | Child Care Provider | 2.0 days (continuous care) |
+| "Need a nurse for my mother's recovery, will need help for 2 weeks" | "2 week" | Nurse | 2.0 weeks (continuous care) |
 
 ## Scoring Interpretation
 
@@ -252,7 +682,7 @@ mcp_complexity_scorer/
 2. Retrain models:
 
 ```powershell
-python train_model.py
+uv run train-model
 ```
 
 3. Re-run demo/tests.
