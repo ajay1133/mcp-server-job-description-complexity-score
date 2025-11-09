@@ -1,0 +1,28 @@
+## I want someone to create a resume parser for pdf...
+
+### Estimated Effort:
+- **Total Lines of Code**: ~1,500 lines
+- **AI-Assisted Development**: ~1.16 (1.2 hours)
+- **Human Development**:
+  - Minimum: 109.89 (4.6 days)
+  - Average: 114.68 (4.8 days)
+
+### Technology Stack Detected:
+#### Recommended by System Design:
+- **Postgres**
+  - Difficulty: 58/100
+  - Estimated LOC: 1,500 (100.0%)
+  - Setup Time: 4.8 days
+  - Tools: PostgreSQL
+  - Complexity Factors: SQL knowledge required, Complex queries, Indexing strategies
+
+### Key Components:
+- **Data Storage**: Postgres
+
+### Development Timeline:
+- With AI assistance: ~1.16 hours
+- Traditional development: ~4.8 days
+- Speed improvement: ~100x faster with AI
+
+### Potential Challenges:
+- **Postgres**: SQL knowledge required, Complex queries, Indexing strategies, Transaction management

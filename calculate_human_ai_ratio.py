@@ -46,49 +46,59 @@ def get_github_headers() -> Dict[str, str]:
         headers['Authorization'] = f'token {GITHUB_TOKEN}'
     return headers
 
-def search_popular_repos(min_size_kb: int = 1000, count: int = 20) -> List[str]:
+def search_popular_repos(min_size_kb: int = 1000, target_count: int = 20) -> List[str]:
     """
     Search for popular repos with >1MB size (roughly >10K lines).
     Returns list of repo full names (owner/repo).
+    Searches extensively to ensure we get enough candidates.
     """
-    print(f"Searching for {count} popular repos with >{min_size_kb}KB size...")
+    print(f"Searching for at least {target_count * 3} candidate repos with >{min_size_kb}KB size...")
     
     # Search for repos with high stars across different languages
-    languages = ['python', 'javascript', 'typescript', 'java', 'go', 'rust', 'cpp', 'ruby', 'php', 'csharp']
+    # Expanded to search more thoroughly
+    languages = ['python', 'javascript', 'typescript', 'java', 'go', 'rust', 'cpp', 'ruby', 'php', 'csharp', 'kotlin', 'swift', 'scala']
     repos = []
     
-    for lang in languages:
-        if len(repos) >= count:
+    # Lower star threshold to get more repos
+    star_thresholds = [5000, 1000, 500, 100]
+    
+    for stars in star_thresholds:
+        if len(repos) >= target_count * 3:
             break
             
-        url = 'https://api.github.com/search/repositories'
-        params = {
-            'q': f'language:{lang} stars:>500 size:>{min_size_kb}',
-            'sort': 'stars',
-            'order': 'desc',
-            'per_page': min(30, count - len(repos))
-        }
-        
-        try:
-            response = requests.get(url, headers=get_github_headers(), params=params, timeout=10)
-            if response.status_code == 200:
-                data = response.json()
-                for item in data.get('items', []):
-                    if item['full_name'] not in repos:  # Avoid duplicates
-                        repos.append(item['full_name'])
-                        if len(repos) >= count:
-                            break
-                print(f"  Found {len(repos)} repos so far (language: {lang})...")
-                time.sleep(1)  # Rate limiting
-            elif response.status_code == 403:
-                print(f"  Rate limited. Waiting 60s...")
-                time.sleep(60)
-            else:
-                print(f"  Error searching {lang}: {response.status_code}")
-        except Exception as e:
-            print(f"  Error searching {lang}: {e}")
+        for lang in languages:
+            if len(repos) >= target_count * 3:
+                break
+                
+            url = 'https://api.github.com/search/repositories'
+            params = {
+                'q': f'language:{lang} stars:>{stars} size:>{min_size_kb}',
+                'sort': 'stars',
+                'order': 'desc',
+                'per_page': 50
+            }
+            
+            try:
+                response = requests.get(url, headers=get_github_headers(), params=params, timeout=10)
+                if response.status_code == 200:
+                    data = response.json()
+                    for item in data.get('items', []):
+                        if item['full_name'] not in repos:  # Avoid duplicates
+                            repos.append(item['full_name'])
+                            if len(repos) >= target_count * 3:
+                                break
+                    print(f"  Found {len(repos)} candidate repos (language: {lang}, stars:>{stars})...")
+                    time.sleep(1)  # Rate limiting
+                elif response.status_code == 403:
+                    print(f"  Rate limited. Waiting 60s...")
+                    time.sleep(60)
+                else:
+                    print(f"  Error searching {lang}: {response.status_code}")
+            except Exception as e:
+                print(f"  Error searching {lang}: {e}")
     
-    return repos[:count]
+    print(f"✓ Found {len(repos)} candidate repos to analyze")
+    return repos
 
 def count_lines_in_repo(repo_full_name: str) -> int:
     """
@@ -322,18 +332,23 @@ def main():
             return
         print()
     
-    # Search for repos
-    print("Step 1: Searching for repositories...")
-    repo_names = search_popular_repos(min_size_kb=1000, count=20)
-    print(f"\n✓ Found {len(repo_names)} repos to analyze\n")
+    # Search for repos - get 3x candidates to ensure 20 valid ones
+    target_valid_repos = 20
+    print(f"Step 1: Searching for repositories (target: {target_valid_repos} valid repos)...")
+    repo_names = search_popular_repos(min_size_kb=1000, target_count=target_valid_repos)
+    print(f"\n✓ Found {len(repo_names)} candidate repos to analyze\n")
     
-    # Analyze each repo
-    print("Step 2: Analyzing repositories...")
+    # Analyze each repo until we have enough valid ones
+    print(f"Step 2: Analyzing repositories (stopping after {target_valid_repos} valid repos)...")
     print()
     results = []
     
     for i, repo_name in enumerate(repo_names, 1):
-        print(f"[{i}/{len(repo_names)}]", end=" ")
+        if len(results) >= target_valid_repos:
+            print(f"\n✓ Reached target of {target_valid_repos} valid repos. Stopping.\n")
+            break
+            
+        print(f"[{i}/{len(repo_names)}] (Valid: {len(results)}/{target_valid_repos})", end=" ")
         
         stats = get_repo_stats(repo_name)
         if stats:
@@ -342,8 +357,8 @@ def main():
         # Rate limiting
         time.sleep(1)
         
-        # Save intermediate results every 10 repos
-        if i % 10 == 0:
+        # Save intermediate results every 5 repos
+        if len(results) % 5 == 0:
             print(f"\n  💾 Saving intermediate results ({len(results)} valid repos so far)...\n")
             with open('human_ai_code_ratio_temp.json', 'w') as f:
                 json.dump(results, f, indent=2)
@@ -375,7 +390,7 @@ def main():
     
     with open('human_ai_code_ratio.log', 'w', encoding='utf-8') as f:
         f.write("=" * 140 + "\n")
-        f.write("GitHub Repository Analysis: Human vs AI Coding Speed (20 repos)\n")
+        f.write(f"GitHub Repository Analysis: Human vs AI Coding Speed ({len(results)} repos)\n")
         f.write("=" * 140 + "\n\n")
         
         f.write(f"Analysis Date: {datetime.now().isoformat()}\n")

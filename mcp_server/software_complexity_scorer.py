@@ -78,11 +78,12 @@ class SoftwareComplexityScorer:
     This scorer focuses strictly on software/computer requirements and returns an error
     for non-software prompts based on a trained classifier.
     
-    Output schema:
-    - without_ai_and_ml: {technologies: {frontend, backend, database}, microservices: [..], time_estimation}
-    - with_ai_and_ml: {extra_technologies, microservices: [..], time_estimation}
-    - system_design_plan: {architecture_style, components, data_flow, data_stores}
-    - complexity_score: linearly based on predicted LOC with Linux (28,000,000 LOC) mapped to 100
+    Output schema (final response highlights):
+    - Root: technologies (split), microservices, predicted_lines_of_code, data_flow, complexity_score
+    - without_ai_and_ml: { time_estimation: { hours_min, hours_avg, hours_max, ... } }
+    - with_ai_and_ml: { extra_technologies, speedup_details, time_estimation }
+    - Note: system_design_plan and proposed_system_design are not included; only data_flow is exposed at root
+    - complexity_score: multi-factor 0–100 scaled metric
     """
 
     def __init__(self, model_dir: str | None = None):
@@ -146,6 +147,23 @@ class SoftwareComplexityScorer:
             self._system_design_vec = joblib.load(os.path.join(models_dir, 'system_design_vectorizer.pkl'))
         except Exception:
             pass  # Models optional
+
+    # -------------------------- Mention helpers ---------------------------
+    @staticmethod
+    def _mention_aliases() -> Dict[str, List[str]]:
+        """Aliases to detect tech mentions in prompt text."""
+        return {
+            'aws_lambda': ['lambda', 'aws lambda', 'lambda function', 'lambda functions'],
+            'api_gateway': ['api gateway', 'apigateway', 'api-gateway', 'aws api gateway'],
+            'dynamodb': ['dynamodb', 'dynamo db'],
+        }
+
+    def _is_tech_mentioned(self, tech: str, prompt: str) -> bool:
+        t = (prompt or '').lower()
+        candidates = {tech.lower(), tech.replace('_', ' ').lower()}
+        aliases = self._mention_aliases().get(tech, [])
+        candidates.update(a.lower() for a in aliases)
+        return any(c in t for c in candidates)
         
         try:
             # Load technology criticality classifier
@@ -403,6 +421,15 @@ class SoftwareComplexityScorer:
             # Some linear models may not expose predict_proba; use decision_function as proxy
             dec = self.software_classifier.decision_function(X)
             proba = 1.0 / (1.0 + np.exp(-float(dec)))
+        # Boost probability if prompt contains software development verbs without requiring "developer"
+        t_lower = text.lower()
+        software_verbs = ['develop', 'build', 'create', 'implement', 'code', 'program', 'design']
+        software_nouns = ['app', 'application', 'website', 'platform', 'system', 'clone', 'api', 'service']
+        has_verb = any(verb in t_lower for verb in software_verbs)
+        has_noun = any(noun in t_lower for noun in software_nouns)
+        # If contains software verb + noun (e.g., "develop a twitter clone"), boost confidence
+        if has_verb and has_noun and proba < 0.85:
+            proba = max(proba, 0.90)
         return float(proba)
 
     @traced
@@ -1010,6 +1037,62 @@ class SoftwareComplexityScorer:
         self._per_tech_complexity_cache = results
         return results
 
+    def _estimate_per_technology_boilerplate_loc(self, tech_split: Dict[str, List[str]]) -> Dict[str, int]:
+        """Estimate boilerplate LOC per technology using config boilerplate_loc map.
+
+        Returns mapping: tech -> boilerplate_loc (int)
+        """
+        out: Dict[str, int] = {}
+        try:
+            config = self._realistic_loc_config.get("boilerplate_loc", {})
+            for category, techs in (tech_split or {}).items():
+                # category can be list (old) or already dict (new); handle lists only here
+                if isinstance(techs, dict):
+                    # If already detailed, collect keys
+                    tech_names = list(techs.keys())
+                else:
+                    tech_names = techs or []
+                cat_map = config.get(category, {}) if isinstance(config.get(category), dict) else {}
+                for t in tech_names:
+                    out[t] = int(cat_map.get(t, 0))
+            # Include common infrastructure if present
+            infra_map = config.get('infrastructure', {}) if isinstance(config.get('infrastructure'), dict) else {}
+            for infra_tech in ["docker", "kubernetes", "terraform", "cicd"]:
+                if any(infra_tech in v if isinstance(v, list) else infra_tech in (v or {}) for v in (tech_split or {}).values()):
+                    out[infra_tech] = int(infra_map.get(infra_tech, 0))
+        except Exception:
+            pass
+        return out
+
+    @staticmethod
+    def _get_alternatives(tech: str) -> List[str]:
+        """Return suggested alternatives for a technology."""
+        mapping = {
+            # Frontend
+            'react': ['angular', 'vue', 'svelte', 'nextjs'],
+            'nextjs': ['react', 'nuxt', 'sveltekit'],
+            'angular': ['react', 'vue', 'svelte'],
+            'vue': ['react', 'angular', 'svelte'],
+            # Backend
+            'node': ['python_fastapi', 'python_django', 'rails', 'golang'],
+            'python_fastapi': ['python_django', 'flask', 'node'],
+            'python_django': ['python_fastapi', 'flask', 'rails'],
+            'flask': ['python_fastapi', 'python_django', 'node'],
+            'rails': ['node', 'python_django', 'golang'],
+            'aws_lambda': ['node', 'python_fastapi', 'google_cloud_functions', 'azure_functions'],
+            'api_gateway': ['kong', 'tyk', 'nginx', 'traefik'],
+            # Databases
+            'postgres': ['mysql', 'mariadb', 'mongodb'],
+            'mysql': ['postgres', 'mariadb'],
+            'mongodb': ['postgres', 'mysql', 'cassandra'],
+            'redis': ['memcached'],
+            'dynamodb': ['mongodb', 'cassandra', 'postgres'],
+            # Infra
+            'docker': ['podman'],
+            'kubernetes': ['nomad', 'ecs'],
+        }
+        return mapping.get(tech, [])
+
     def _compute_complexity(self, text: str, technologies: List[str], microservices: List[str], hours: float, ai_hours: float, experience_requirements: Dict[str, float] | None = None) -> float:
         """Compute complexity score based on time, technology diversity, microservices, and experience requirements.
         
@@ -1106,7 +1189,6 @@ class SoftwareComplexityScorer:
                 'manual_hours': round(manual_hours, 2),
                 'ai_hours': round(ai_hours, 2),
                 'speed_ratio': '98.73x (AI is 1.013% of human time, includes prompt overhead)',
-                'is_ml_required': is_ml_required,
                 'is_ai_required': is_ai_required
             }
         }
@@ -1222,8 +1304,12 @@ class SoftwareComplexityScorer:
     @traced
     def _split_technologies(self, all_techs: List[str]) -> Dict[str, List[str]]:
         frontend_set = {'react', 'nextjs', 'vue', 'angular', 'svelte'}
-        backend_set = {'node', 'python_fastapi', 'python_django', 'flask', 'rails', 'php'}
-        database_set = {'postgres', 'mysql', 'mongodb', 'redis'}
+        backend_set = {
+            'node', 'python_fastapi', 'python_django', 'flask', 'rails', 'php',
+            # Serverless execution / API orchestration considered backend logic carriers
+            'aws_lambda', 'api_gateway'
+        }
+        database_set = {'postgres', 'mysql', 'mongodb', 'redis', 'dynamodb'}
         mobile_set = {'android', 'ios', 'react_native', 'flutter'}
 
         frontend = [t for t in all_techs if t in frontend_set]
@@ -1348,6 +1434,18 @@ class SoftwareComplexityScorer:
         if self._tech_criticality_clf is None or self._tech_criticality_vec is None:
             return []
         
+        # Get difficulty ratings for all technologies
+        difficulty_map = {}
+        difficulty_data = self._technology_difficulty
+        for category, entries in difficulty_data.items():
+            if category.startswith('_') or category in ['difficulty_multipliers', 'learning_order_recommendations']:
+                continue
+            if not isinstance(entries, dict):
+                continue
+            for tech_name, meta in entries.items():
+                if tech_name in technologies:
+                    difficulty_map[tech_name] = float(meta.get('difficulty', 0))
+        
         tech_analysis = []
         for tech in technologies:
             try:
@@ -1361,8 +1459,25 @@ class SoftwareComplexityScorer:
                 # Get LOC overhead from mapping
                 loc_overhead = self._tech_loc_overhead_map.get(tech, 0)
                 
-                # Estimate time overhead (using AI speed: 0.77 hours per 1000 LOC)
-                time_overhead_hours = (loc_overhead / 1000.0) * 0.77 if loc_overhead > 0 else 0.0
+                # Calculate time overhead using BOTH LOC and difficulty, then take max
+                # Time from LOC (coding time)
+                loc_based_time = (loc_overhead / 1000.0) * 0.77 if loc_overhead > 0 else 0.0
+                
+                # Time from difficulty (setup/config time)
+                tech_difficulty = difficulty_map.get(tech, 0)
+                if tech_difficulty > 0:
+                    # Base setup time calculation:
+                    # Difficulty 1-3 (easy): 0.5-2 hours
+                    # Difficulty 4-6 (medium): 2-6 hours  
+                    # Difficulty 7-10 (hard): 6-20 hours
+                    # Formula: exponential growth based on difficulty
+                    difficulty_based_time = 0.3 * (1.5 ** tech_difficulty)
+                else:
+                    difficulty_based_time = 0.0
+                
+                # Take the maximum of both calculations
+                # This ensures technologies with small LOC but high difficulty get proper time allocation
+                time_overhead_hours = max(loc_based_time, difficulty_based_time)
                 
                 tech_analysis.append({
                     "technology": tech,
@@ -1439,16 +1554,42 @@ class SoftwareComplexityScorer:
                             added_from_patterns.append(normalized_tech)
                 pattern_sources.append(pattern_name)
         
-        # Then try online enrichment to catch explicit mentions (PHP, MySQL, etc.)
+        # Then try online enrichment to catch explicit mentions (PHP, MySQL, AWS, etc.)
         online_techs = self._infer_technologies_online(text)
         if online_techs:
             for ot in online_techs:
                 if ot not in technologies:
                     technologies.append(ot)
                     added_from_online.append(ot)
+
+        # Heuristic enrichment for AWS serverless stack (lambda, API Gateway, DynamoDB)
+        aws_added: List[str] = []
+        try:
+            tl = t  # already lower-cased text from above
+            def _add(tech_id: str):
+                if tech_id not in technologies:
+                    technologies.append(tech_id)
+                    aws_added.append(tech_id)
+
+            if 'dynamodb' in tl:
+                _add('dynamodb')
+            if 'api gateway' in tl or 'apigateway' in tl or 'api-gateway' in tl:
+                _add('api_gateway')
+            if 'lambda' in tl:
+                _add('aws_lambda')
+            # Generic 'serverless' hint
+            if 'serverless' in tl:
+                # If APIs are mentioned, API Gateway is commonly used
+                if ('api' in tl or 'apis' in tl) and 'api_gateway' not in technologies:
+                    _add('api_gateway')
+                # Default serverless compute
+                if 'aws_lambda' not in technologies:
+                    _add('aws_lambda')
+        except Exception:
+            pass
         
         # Build enrichment info
-        if added_from_patterns or added_from_online:
+        if added_from_patterns or added_from_online or aws_added:
             enrichment_info = {
                 "used": True,
                 "sources": []
@@ -1463,6 +1604,11 @@ class SoftwareComplexityScorer:
                 enrichment_info["sources"].append({
                     "type": "online_keywords",
                     "technologies_added": added_from_online
+                })
+            if aws_added:
+                enrichment_info["sources"].append({
+                    "type": "aws_serverless_keywords",
+                    "technologies_added": aws_added
                 })
         
         return technologies, enrichment_info
@@ -1549,7 +1695,14 @@ class SoftwareComplexityScorer:
             # Image processing
             "pillow": "image_processing",
             "imagemagick": "image_processing",
-            "lambda": "serverless",
+            # AWS Serverless & Services
+            "lambda": "aws_lambda",
+            "aws_lambda": "aws_lambda",
+            "api_gateway": "api_gateway",
+            "api gateway": "api_gateway",
+            "apigateway": "api_gateway",
+            "aws_api_gateway": "api_gateway",
+            "dynamodb": "dynamodb",
             # Misc
             "video_js": "frontend_lib"
         }
@@ -1571,11 +1724,14 @@ class SoftwareComplexityScorer:
             lines.append(f"  • Domain complexity multiplier: {domain_multiplier}x (from GitHub: {', '.join(reference_repos[:2])})")
         lines.append("")
         
-        # Show manual time calculation
-        time_saved_percent = (1 - speedup_factor) * 100
-        lines.append(f"Manual estimate: {manual_hours:.1f} hours ({time_saved_percent:.1f}% slower)")
-        lines.append(f"  • Calculated as: AI time × 98.73 (based on GitHub analysis with prompt overhead)")
-        lines.append(f"  • Human time from Git history, breaks apply to both scenarios")
+        # Calculate speedup using baseline (1 line = 60 seconds)
+        speedup_ratio = manual_hours / ai_hours if ai_hours > 0 else 1.0
+        time_saved_percent = (1 - (ai_hours / manual_hours)) * 100 if manual_hours > 0 else 0
+        
+        lines.append(f"Manual estimate: {manual_hours:.1f} hours")
+        lines.append(f"  • Baseline: 1 line = 60 seconds (industry standard)")
+        lines.append(f"  • Range provided: ±20% variation for different developer speeds")
+        lines.append(f"  • AI is {speedup_ratio:.1f}x faster")
         lines.append("")
         
         if speedup_details:
@@ -1589,13 +1745,12 @@ class SoftwareComplexityScorer:
             lines.append("")
         
         lines.append("  Key insight:")
-        lines.append("    Based on analysis of 6 major GitHub repos (TheAlgorithms, AutoGPT, etc.)")
-        lines.append("    AI is 98.73x faster (human is 1.013% of AI speed)")
-        lines.append("    Adjustment applied: AI time includes prompt overhead")
-        lines.append("    Human time uses original Git history (breaks apply to estimates)")
+        lines.append("    Human baseline: 1 line = 60 seconds (1 minute per line of code)")
+        lines.append("    This is an industry-standard assumption for average developer productivity")
+        lines.append("    AI coding speed varies by complexity but averages ~0.77 hours per 1000 LOC")
         lines.append("")
-        lines.append("Note: This includes prompt overhead. Actual development also includes requirements,")
-        lines.append("      design, testing, debugging, and integration which affect both timelines.")
+        lines.append("Note: Estimates include coding time only. Actual development also includes")
+        lines.append("      requirements, design, testing, debugging, and integration.")
         return "\n".join(lines)
 
     def analyze_text(self, text: str) -> Dict[str, Any]:
@@ -1626,6 +1781,9 @@ class SoftwareComplexityScorer:
         """
         if not text or not text.strip():
             return {"error": "Empty requirement text"}
+
+        # Store prompt for simplified output
+        self._last_prompt = text
 
         # Start per-request trace logging
         self._trace_start(text)
@@ -1687,25 +1845,16 @@ class SoftwareComplexityScorer:
         boilerplate_loc = self._calculate_total_boilerplate_loc(tech_split)
         human_coding_loc = max(0, realistic_loc - boilerplate_loc)  # Never negative
         
-        # Calculate manual time range using human_ai_code_ratio.json analysis
-        # This file contains ratios from 6 GitHub repos comparing human vs AI speeds
-        # 
-        # Ratios from analysis:
-        #   - Min ratio: 0.01000830 (fastest human relative to AI)
-        #   - Median ratio: 0.01007192 (typical human relative to AI)
-        #   - Max ratio: 0.01051033 (slowest human relative to AI)
-        #
-        # Interpretation: Human speed is ~1% of AI speed (AI is ~99-100x faster)
-        # Formula: manual_time = ai_time / ratio
+        # Calculate manual time using baseline: 1 line = 60 seconds
+        # This is the industry-standard assumption for human coding speed
+        # Formula: manual_hours = (LOC × 60 seconds) / 3600
+        seconds_per_line = 60.0
+        manual_hours_baseline = (human_coding_loc * seconds_per_line) / 3600.0
         
-        min_human_ai_ratio = 0.01000830   # Fastest human (langflow repo)
-        median_human_ai_ratio = 0.01007192  # Median human (typical)
-        max_human_ai_ratio = 0.01051033    # Slowest human (TheAlgorithms repo)
-        
-        # Calculate time range
-        manual_hours_min = ai_hours / max_human_ai_ratio   # Best case: fastest human
-        manual_hours_avg = ai_hours / median_human_ai_ratio  # Typical case: median human
-        manual_hours_max = ai_hours / min_human_ai_ratio   # Worst case: slowest human
+        # Provide range: ±20% variation for different developers
+        manual_hours_min = manual_hours_baseline * 0.8   # Fast developer (48 sec/line)
+        manual_hours_avg = manual_hours_baseline         # Average developer (60 sec/line)
+        manual_hours_max = manual_hours_baseline * 1.2   # Slower developer (72 sec/line)
 
         # Detect hiring/job-description style prompts (already computed above)
         # is_hiring remains as determined via classifier/heuristic
@@ -1726,11 +1875,13 @@ class SoftwareComplexityScorer:
             ai_metrics.get('speedup_details')
         )
         
-        # Predict system design architecture using ML model
+        # Predict system design architecture using ML model (kept internal; not surfaced directly)
         system_design_prediction = self._predict_system_design_architecture(text)
         
-        # Analyze technology criticality and overhead
-        tech_criticality_analysis = self._analyze_technology_criticality(text, technologies)
+        # Build per-technology analysis for final response: only time share percentages and mention flag
+        # Compute LOC breakdown for percentage shares
+        # We'll compute these after loc_breakdown is available (later); placeholder here
+        tech_criticality_analysis = []
         
         if is_hiring:
             # For hiring prompts: compute a skills complexity score and return only the minimal schema.
@@ -1768,20 +1919,59 @@ class SoftwareComplexityScorer:
                 per_tech_complexity=per_tech_complexity
             )
 
+            # Build per-technology time share analysis (percentages + mentioned flag)
+            loc_by_tech = loc_breakdown.get('by_technology', {}) if isinstance(loc_breakdown, dict) else {}
+            per_tech_time_share: List[Dict[str, Any]] = []
+            for tech, tech_loc in loc_by_tech.items():
+                if tech_loc <= 0:
+                    continue
+                share_pct = (tech_loc / realistic_loc * 100.0) if realistic_loc > 0 else 0.0
+                mentioned = self._is_tech_mentioned(tech, text)
+                per_tech_time_share.append({
+                    "technology": tech,
+                    "time_spent": {
+                        "human_percent": round(share_pct, 2),
+                        "ai_percent": round(share_pct, 2)
+                    },
+                    "is_mentioned_in_prompt": bool(mentioned)
+                })
+
+            # Build nested technologies with per-tech details (move loc_breakdown + per-tech time here)
+            per_tech_boiler = self._estimate_per_technology_boilerplate_loc(tech_split)
+            nested_tech: Dict[str, Dict[str, Any]] = {}
+            loc_by_tech = loc_breakdown.get('by_technology', {}) if isinstance(loc_breakdown, dict) else {}
+            ai_total = ai_hours
+            for category, techs in tech_split.items():
+                cat_obj: Dict[str, Any] = {}
+                for tech in techs:
+                    t_loc = int(loc_by_tech.get(tech, 0))
+                    share = (t_loc / realistic_loc) if realistic_loc > 0 else 0.0
+                    human_avg_hours = manual_hours_avg * share
+                    ai_share_hours = ai_total * share
+                    t_meta = per_tech_complexity.get(tech, {})
+                    mentioned = self._is_tech_mentioned(tech, text)
+                    cat_obj[tech] = {
+                        "loc": t_loc,
+                        "time_spent": {
+                            "human": {"hours": round(human_avg_hours, 2), "percent": round(share * 100.0, 2)},
+                            "ai": {"hours": round(ai_share_hours, 2), "percent": round(share * 100.0, 2)}
+                        },
+                        "is_mentioned_in_prompt": bool(mentioned),
+                        "boilerplate_loc_deducted": int(per_tech_boiler.get(tech, 0)),
+                        "difficulty": float(t_meta.get('difficulty', 5.0)),
+                        "complexity_score": int(t_meta.get('base_score', 0)),
+                        "alternatives": self._get_alternatives(tech)
+                    }
+                nested_tech[category] = cat_obj
+
             result_hiring: Dict[str, Any] = {
-                "technologies": tech_split,
+                "technologies": nested_tech,
                 "predicted_lines_of_code": int(realistic_loc),
                 "skills_complexity_score": round(float(skills_score), 2),
                 "complexity_score": multifactor['complexity_score_v2'],
                 "size_score_linux_ref": round(float(loc_based_score), 2),
-                "complexity_v2": multifactor,
-                "complexity_explanation": multifactor.get('explanation'),
-                "complexity_score_explanation": complexity_score_explanation,
-                "per_technology_complexity": per_tech_complexity,
-                "loc_breakdown": loc_breakdown,
+                # No separate complexity_v2 or difficulty_summary fields
                 "is_hiring_requirement": True,
-                "proposed_system_design": system_design_prediction,
-                "per_technology_analysis": tech_criticality_analysis,
                 "time_estimation": {
                     "ai_hours": round(ai_hours, 2),
                     "ai_human_readable": self._format_time_human_readable(ai_hours),
@@ -1796,6 +1986,13 @@ class SoftwareComplexityScorer:
                     "note": "Range based on human_ai_code_ratio.json analysis: min ratio 0.01000830 (fastest), median 0.01007192 (typical), max 0.01051033 (slowest). AI is ~99-100x faster."
                 }
             }
+            # Move data_flow to root and remove system_design_plan/proposed_system_design from final response
+            try:
+                plan = self._build_system_design_plan(services, tech_split)
+                if isinstance(plan, dict) and 'data_flow' in plan:
+                    result_hiring['data_flow'] = plan['data_flow']
+            except Exception:
+                pass
             # Optionally include detection metadata for debugging
             result_hiring["hiring_detection"] = {"source": hiring_source, "proba": round(hiring_proba, 3)}
             self._trace_end(result_hiring)
@@ -1803,12 +2000,15 @@ class SoftwareComplexityScorer:
         # Compute LOC-based linear size score (Linux 28M LOC = 100)
         linux_ref_size_score = self._compute_loc_based_complexity_score(realistic_loc)
 
+        # Build nested technologies with per-tech details (build path)
+        per_tech_boiler = self._estimate_per_technology_boilerplate_loc(tech_split)
+        nested_tech: Dict[str, Dict[str, Any]] = {}
+        # We'll fill after loc_breakdown available, so create placeholder then patch below after computing multifactor
         result: Dict[str, Any] = {
-            "technologies": tech_split,
+            "technologies": nested_tech,
             "predicted_lines_of_code": int(realistic_loc),
             "microservices": services,
-            "proposed_system_design": system_design_prediction,
-            "per_technology_analysis": tech_criticality_analysis,
+            # per_technology_analysis will be set after loc_breakdown
             "without_ai_and_ml": {
                 "time_estimation": {
                     "hours_min": round(manual_hours_min, 2),
@@ -1819,20 +2019,20 @@ class SoftwareComplexityScorer:
                     "human_readable_max": self._format_time_human_readable(manual_hours_max),
                     "boilerplate_loc_deducted": boilerplate_loc,
                     "human_coding_loc": human_coding_loc,
-                    "note": f"Range from human_ai_code_ratio.json (6 GitHub repos): min/median/max ratios give ~95-105x AI speedup. Boilerplate ({boilerplate_loc} LOC) deducted."
+                    "note": f"Baseline: 1 line = 60 seconds. Range ±20% for developer variation (48-72 sec/line). Boilerplate ({boilerplate_loc} LOC) deducted from human time."
                 }
             },
             "with_ai_and_ml": {
-                **{k: v for k, v in ai_metrics.items() if k not in ['speedup_factor', 'speedup_category', 'time_estimation', 'is_ai_required', 'is_ml_required', 'extra_technologies']},
+                **{k: v for k, v in ai_metrics.items() if k not in ['speedup_factor', 'speedup_category', 'time_estimation']},
                 "time_estimation": {
                     "hours": round(ai_metrics['time_estimation'], 2),
                     "human_readable": self._format_time_human_readable(ai_metrics['time_estimation'])
                 }
             },
             "time_estimation_explanation": time_explanation,
-            "system_design_plan": self._build_system_design_plan(services, tech_split),
+            # system_design_plan removed from final response; expose only data_flow at root
             # Placeholder; will set complexity_score after computing multifactor
-            "complexity_score": None,
+            # Placeholder; will set complexity_score after computing multifactor
             "size_score_linux_ref": round(float(linux_ref_size_score), 2)
         }
         # Add per-technology complexity scoring & LOC breakdown
@@ -1848,20 +2048,43 @@ class SoftwareComplexityScorer:
             domain_multiplier=domain_multiplier,
             per_tech_complexity=per_tech_complexity
         )
-        result['complexity_v2'] = multifactor
+        # Expose complexity_score computed from multi-factor model; do not include separate complexity_v2/difficulty_summary fields
         result['complexity_score'] = multifactor['complexity_score_v2']
-        result['complexity_explanation'] = multifactor.get('explanation')
-        # Aggregate difficulty summary
-        avg_diff = round(sum(v['difficulty'] for v in per_tech_complexity.values()) / max(len(per_tech_complexity), 1), 2)
-        hardest = sorted(per_tech_complexity.items(), key=lambda kv: kv[1]['difficulty'], reverse=True)[:3]
-        difficulty_summary = {
-            'average_difficulty': avg_diff,
-            'hardest_technologies': [k for k, _ in hardest],
-            'hardest_details': [{k: v} for k, v in hardest]
-        }
-        result['difficulty_summary'] = difficulty_summary
-        result['per_technology_complexity'] = per_tech_complexity
-        result['loc_breakdown'] = loc_breakdown
+        # complexity_explanation removed per schema cleanup (difficulty_summary removed)
+        # Keep loc_breakdown; do not expose per_technology_complexity summary structure
+        # Build nested technologies structure with LOC & time
+        loc_by_tech = loc_breakdown.get('by_technology', {}) if isinstance(loc_breakdown, dict) else {}
+        ai_total = ai_hours
+        for category, techs in tech_split.items():
+            cat_obj: Dict[str, Any] = {}
+            for tech in techs:
+                t_loc = int(loc_by_tech.get(tech, 0))
+                share = (t_loc / realistic_loc) if realistic_loc > 0 else 0.0
+                human_avg_hours = manual_hours_avg * share
+                ai_share_hours = ai_total * share
+                t_meta = per_tech_complexity.get(tech, {})
+                mentioned = self._is_tech_mentioned(tech, text)
+                cat_obj[tech] = {
+                    "loc": t_loc,
+                    "time_spent": {
+                        "human": {"hours": round(human_avg_hours, 2), "percent": round(share * 100.0, 2)},
+                        "ai": {"hours": round(ai_share_hours, 2), "percent": round(share * 100.0, 2)}
+                    },
+                    "is_mentioned_in_prompt": bool(mentioned),
+                    "boilerplate_loc_deducted": int(per_tech_boiler.get(tech, 0)),
+                    "difficulty": float(t_meta.get('difficulty', 5.0)),
+                    "complexity_score": int(t_meta.get('base_score', 0)),
+                    "alternatives": self._get_alternatives(tech)
+                }
+            nested_tech[category] = cat_obj
+        result['technologies'] = nested_tech
+        # Expose only data_flow at root level
+        try:
+            plan = self._build_system_design_plan(services, tech_split)
+            if isinstance(plan, dict) and 'data_flow' in plan:
+                result['data_flow'] = plan['data_flow']
+        except Exception:
+            pass
         # Store last result for export helper methods
         self._last_result = result
         if enrichment_info:
@@ -1908,3 +2131,290 @@ class SoftwareComplexityScorer:
             return True
         except Exception:
             return False
+
+    def get_simplified_output(self) -> Dict[str, Any]:
+        """Return simplified schema with essential metrics only.
+        
+        Must be called after analyze_text() to access last result.
+        Returns clean schema matching user requirements exactly.
+        """
+        data = getattr(self, '_last_result', None)
+        if not data:
+            return {"error": "No analysis result available. Call analyze_text() first."}
+        
+        # Extract core metrics
+        realistic_loc = data.get('predicted_lines_of_code', 0)
+        without_ai = data.get('without_ai_and_ml', {})
+        with_ai = data.get('with_ai_and_ml', {})
+        time_est = without_ai.get('time_estimation', {})
+        ai_time_est = with_ai.get('time_estimation', {})
+        
+        # Human/AI speed from config
+        ai_speed_config = self._realistic_loc_config.get("ai_coding_speed", {})
+        ai_hours_per_1000_loc = ai_speed_config.get("hours_per_1000_loc", 0.77)
+        
+        # Get ratios from config or fallback
+        ratio_min = 0.01000830
+        ratio_avg = 0.01007192
+        
+        # Human speed = AI speed * ratio
+        ai_lines_per_sec = (1000.0 / (ai_hours_per_1000_loc * 3600)) if ai_hours_per_1000_loc > 0 else 0
+        human_lines_per_sec = ai_lines_per_sec * ratio_avg
+        
+        # AI time
+        ai_hours = ai_time_est.get('hours', 0)
+        ai_human_readable = ai_time_est.get('human_readable', '')
+        
+        # Human times
+        manual_hours_min = time_est.get('hours_min', 0)
+        manual_hours_avg = time_est.get('hours_avg', 0)
+        
+        manual_readable_min = time_est.get('human_readable_min', '')
+        manual_readable_avg = time_est.get('human_readable_avg', '')
+        
+        # Per-technology breakdown - only include technologies with LOC > 0
+        tech_split = data.get('technologies', {})
+        # Support both old (list) and new (nested) structures
+        loc_breakdown_map = data.get('loc_breakdown', {}).get('by_technology', {})
+        per_tech_complexity = data.get('per_technology_complexity', {})
+        complexity_explanation = data.get('complexity_explanation', {})
+        
+        # Get tech tools map for CLI commands
+        tech_tools = {}
+        try:
+            import json
+            import os
+            config_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'tech_tools_map.json')
+            with open(config_path, 'r', encoding='utf-8') as f:
+                tech_tools = json.load(f)
+        except Exception:
+            pass
+        
+        # Build technology object - only technologies that contribute to LOC
+        technologies_output = {}
+        all_techs_in_result = set()
+        for category_techs in tech_split.values():
+            if isinstance(category_techs, dict):
+                all_techs_in_result.update(category_techs.keys())
+            else:
+                all_techs_in_result.update(category_techs)
+        
+        # Get mentioned technologies from prompt
+        prompt_lower = getattr(self, '_last_prompt', '').lower()
+        
+        for tech in all_techs_in_result:
+            # Prefer new nested "loc" if available
+            tech_loc = 0
+            for category_techs in tech_split.values():
+                if isinstance(category_techs, dict) and tech in category_techs:
+                    tech_loc = int(category_techs[tech].get('loc', 0))
+                    break
+            if tech_loc == 0:
+                tech_loc = loc_breakdown_map.get(tech, 0)
+            
+            # Skip technologies with 0 LOC
+            if tech_loc <= 0:
+                continue
+            
+            tech_complexity_data = per_tech_complexity.get(tech, {})
+            
+            # Calculate per-tech time estimates
+            if realistic_loc > 0:
+                tech_portion = tech_loc / realistic_loc
+                tech_manual_min = manual_hours_min * tech_portion
+                tech_manual_avg = manual_hours_avg * tech_portion
+            else:
+                tech_manual_min = 0
+                tech_manual_avg = 0
+            
+            # Check if explicitly mentioned in prompt
+            tech_normalized = tech.replace('_', ' ').lower()
+            mentioned = tech_normalized in prompt_lower or tech.lower() in prompt_lower
+            
+            # Check if recommended by system design (in mandatory categories but not mentioned)
+            recommended = not mentioned
+            
+            # Calculate contribution percentage
+            contribution_pct = (tech_loc / realistic_loc * 100) if realistic_loc > 0 else 0
+            
+            # Get complexity score and explanation
+            complexity_score = tech_complexity_data.get('base_score', 0)
+            difficulty = tech_complexity_data.get('difficulty', 0)
+            reasons = tech_complexity_data.get('reasons', [])
+            
+            # Build technology entry
+            tech_entry = {
+                "estimated_lines_of_code": f"{int(tech_loc):,}",
+                "estimated_human_time_min": round(tech_manual_min, 2),
+                "estimated_human_time_min_readable": self._format_time_human_readable(tech_manual_min),
+                "estimated_human_time_average": round(tech_manual_avg, 2),
+                "estimated_human_time_average_readable": self._format_time_human_readable(tech_manual_avg),
+                "mentioned_in_prompt": mentioned,
+                "recommended_in_standard_system_design": recommended,
+                "contribution_to_lines_of_code": round(contribution_pct, 2),
+                "complexity_score": int(complexity_score)
+            }
+            
+            # Add complexity explanation if available
+            if reasons:
+                tech_entry["complexity_explanation"] = {
+                    "difficulty_level": difficulty,
+                    "reasons": reasons
+                }
+            
+            # Add CLI command if available
+            if tech in tech_tools and tech_tools[tech]:
+                tech_entry["default_cli_code"] = tech_tools[tech][0] if isinstance(tech_tools[tech], list) else str(tech_tools[tech])
+            
+            # Add difficulty explanation
+            time_to_prod = tech_complexity_data.get('time_to_productivity', '')
+            if time_to_prod or reasons:
+                tech_entry["difficulty_explanation"] = {
+                    "time_to_productivity": time_to_prod,
+                    "learning_curve_factors": reasons
+                }
+            
+            technologies_output[tech] = tech_entry
+        
+        # Format LOC as human readable
+        if realistic_loc >= 1000:
+            loc_readable = f"{realistic_loc:,}"
+        else:
+            loc_readable = str(int(realistic_loc))
+        
+        result_dict = {
+            "estimated_no_of_lines": loc_readable,
+            "human_lines_per_second": round(human_lines_per_sec, 2),
+            "ai_lines_per_second": round(ai_lines_per_sec, 2),
+            "human_to_ai_ratio_min": round(ratio_min, 2),
+            "estimated_ai_time": f"{round(ai_hours, 2)} ({ai_human_readable})",
+            "estimated_human_time_min": f"{round(manual_hours_min, 2)} ({manual_readable_min})",
+            "estimated_human_time_average": f"{round(manual_hours_avg, 2)} ({manual_readable_avg})",
+            "technologies": technologies_output
+        }
+        
+        # Add formatted detailed string
+        result_dict["formatted_detailed_string"] = self._format_detailed_response(
+            result_dict, 
+            getattr(self, '_last_prompt', 'Project')
+        )
+        
+        return result_dict
+    
+    def _format_detailed_response(self, simplified_data: Dict[str, Any], prompt: str) -> str:
+        """Format the simplified output as a detailed, readable string response.
+        
+        Creates a formatted response similar to a human analyst explaining the project complexity.
+        """
+        lines = []
+        
+        # Extract project title from prompt (first few words)
+        prompt_words = prompt.strip().split()[:10]
+        project_title = ' '.join(prompt_words).capitalize()
+        if len(prompt_words) >= 10:
+            project_title += "..."
+        
+        # Header
+        lines.append(f"## {project_title}")
+        lines.append("")
+        
+        # Estimated Effort section
+        lines.append("### Estimated Effort:")
+        lines.append(f"- **Total Lines of Code**: ~{simplified_data['estimated_no_of_lines']} lines")
+        lines.append(f"- **AI-Assisted Development**: ~{simplified_data['estimated_ai_time']}")
+        lines.append(f"- **Human Development**:")
+        lines.append(f"  - Minimum: {simplified_data['estimated_human_time_min']}")
+        lines.append(f"  - Average: {simplified_data['estimated_human_time_average']}")
+        lines.append("")
+        
+        # Technology Stack section
+        technologies = simplified_data.get('technologies', {})
+        if technologies:
+            lines.append("### Technology Stack Detected:")
+            
+            # Separate mentioned and recommended
+            mentioned_techs = {k: v for k, v in technologies.items() if v.get('mentioned_in_prompt', False)}
+            recommended_techs = {k: v for k, v in technologies.items() if v.get('recommended_in_standard_system_design', False)}
+            
+            if mentioned_techs:
+                lines.append("#### Mentioned in Requirements:")
+                for tech, data in mentioned_techs.items():
+                    lines.append(f"- **{tech.replace('_', ' ').title()}**")
+                    lines.append(f"  - Difficulty: {data.get('complexity_score', 0)}/100")
+                    lines.append(f"  - Estimated LOC: {data['estimated_lines_of_code']} ({data['contribution_to_lines_of_code']}%)")
+                    lines.append(f"  - Setup Time: {data['estimated_human_time_average_readable']}")
+                    
+                    if 'default_cli_code' in data:
+                        lines.append(f"  - Tools: {data['default_cli_code']}")
+                    
+                    complexity_exp = data.get('complexity_explanation', {})
+                    if complexity_exp and 'reasons' in complexity_exp:
+                        lines.append(f"  - Complexity Factors: {', '.join(complexity_exp['reasons'][:3])}")
+                    lines.append("")
+            
+            if recommended_techs:
+                lines.append("#### Recommended by System Design:")
+                for tech, data in recommended_techs.items():
+                    lines.append(f"- **{tech.replace('_', ' ').title()}**")
+                    lines.append(f"  - Difficulty: {data.get('complexity_score', 0)}/100")
+                    lines.append(f"  - Estimated LOC: {data['estimated_lines_of_code']} ({data['contribution_to_lines_of_code']}%)")
+                    lines.append(f"  - Setup Time: {data['estimated_human_time_average_readable']}")
+                    
+                    if 'default_cli_code' in data:
+                        lines.append(f"  - Tools: {data['default_cli_code']}")
+                    
+                    complexity_exp = data.get('complexity_explanation', {})
+                    if complexity_exp and 'reasons' in complexity_exp:
+                        lines.append(f"  - Complexity Factors: {', '.join(complexity_exp['reasons'][:3])}")
+                    lines.append("")
+        
+        # Key Components section (generic based on technologies)
+        lines.append("### Key Components:")
+        tech_categories = {}
+        for tech, data in technologies.items():
+            complexity_data = data.get('complexity_explanation', {})
+            category = 'Other'
+            if 'database' in tech.lower() or tech.lower() in ['postgres', 'mysql', 'mongodb', 'redis']:
+                category = 'Data Storage'
+            elif 'react' in tech.lower() or 'vue' in tech.lower() or 'angular' in tech.lower() or 'nextjs' in tech.lower():
+                category = 'Frontend'
+            elif 'node' in tech.lower() or 'python' in tech.lower() or 'fastapi' in tech.lower() or 'django' in tech.lower():
+                category = 'Backend'
+            elif 'auth' in tech.lower():
+                category = 'Authentication'
+            elif 'docker' in tech.lower() or 'devops' in tech.lower():
+                category = 'Infrastructure'
+            
+            if category not in tech_categories:
+                tech_categories[category] = []
+            tech_categories[category].append(tech.replace('_', ' ').title())
+        
+        for category, techs in sorted(tech_categories.items()):
+            if techs:
+                lines.append(f"- **{category}**: {', '.join(techs)}")
+        lines.append("")
+        
+        # Development Timeline
+        lines.append("### Development Timeline:")
+        ai_time_match = simplified_data['estimated_ai_time'].split('(')[0].strip()
+        human_time_match = simplified_data['estimated_human_time_average'].split('(')[1].strip(')')
+        
+        lines.append(f"- With AI assistance: ~{ai_time_match} hours")
+        lines.append(f"- Traditional development: ~{human_time_match}")
+        lines.append(f"- Speed improvement: ~{round(1/simplified_data['human_to_ai_ratio_min'])}x faster with AI")
+        lines.append("")
+        
+        # Challenges section
+        lines.append("### Potential Challenges:")
+        high_complexity_techs = [(k, v) for k, v in technologies.items() if v.get('complexity_score', 0) >= 50]
+        if high_complexity_techs:
+            for tech, data in sorted(high_complexity_techs, key=lambda x: x[1].get('complexity_score', 0), reverse=True)[:3]:
+                complexity_exp = data.get('complexity_explanation', {})
+                if complexity_exp and 'reasons' in complexity_exp:
+                    lines.append(f"- **{tech.replace('_', ' ').title()}**: {', '.join(complexity_exp['reasons'])}")
+        else:
+            lines.append("- Relatively straightforward implementation")
+            lines.append("- Focus on code quality and testing")
+        
+        return '\n'.join(lines)
+

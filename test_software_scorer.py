@@ -39,12 +39,14 @@ def test_software_prompts():
             without_ai = result['without_ai_and_ml']
             with_ai = result['with_ai_and_ml']
             print("✓ Software detected")
-            print(f"  Technologies split: {without_ai['technologies']}")
-            print(f"  Microservices: {without_ai['microservices']}")
+            print(f"  Technologies split: {result['technologies']}")
+            print(f"  Microservices: {result['microservices']}")
             print(f"  Manual time (h): {without_ai['time_estimation']}")
             print(f"  AI-assisted time (h): {with_ai['time_estimation']}")
-            print(f"  System architecture: {result['system_design_plan']['architecture_style']}")
-            print(f"  Complexity score: {result['complexity_score']}")
+            if 'data_flow' in result:
+                print(f"  Data flow: {result['data_flow']}")
+            if 'complexity_score' in result:
+                print(f"  Complexity score: {result['complexity_score']}")
     
     print("\n" + "=" * 70)
     print("\nTEST COMPLETE - Using real trained models!")

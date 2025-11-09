@@ -34,66 +34,38 @@ if 'mobile' not in result['technologies']:
     print("  - 'mobile' category excluded (no mobile tech detected)")
 
 # Feature 2: System design architecture prediction
-print_section("2. System Design Architecture Prediction")
-design = result['proposed_system_design']
-print(f"Predicted Architecture: {design['architecture']}")
-print(f"Confidence: {design['confidence']:.2%}")
-print(f"Model Used: {'Yes' if design['model_used'] else 'No'}")
-print("\nAll Architecture Probabilities:")
-for arch, prob in sorted(design['all_probabilities'].items(), key=lambda x: x[1], reverse=True):
-    bar = "█" * int(prob * 50)
-    print(f"  {arch:20s} {prob:6.2%} {bar}")
+print_section("2. Data Flow (moved to root)")
+data_flow = result.get('data_flow', [])
+print("Inferred Data Flow Steps:")
+for step in data_flow:
+    print(f"  • {step}")
+print("\nNote: Architecture prediction is used internally; only data_flow is exposed in the final response.")
 
 # Feature 3: Technology criticality classification
-print_section("3. Technology Criticality Classification with Overhead")
+print_section("3. Per-Technology Time Share (percentages)")
 
-tech_analysis = result['per_technology_analysis']
+tech_analysis = result.get('per_technology_analysis', [])
 print(f"Total technologies analyzed: {len(tech_analysis)}\n")
 
-# Group by criticality
-mandatory = [t for t in tech_analysis if t['criticality'] == 'mandatory']
-recommended = [t for t in tech_analysis if t['criticality'] == 'recommended']
-optional = [t for t in tech_analysis if t['criticality'] == 'optional']
-
-print(f"Mandatory Technologies ({len(mandatory)}):")
-print("  (Core requirements, cannot be removed)\n")
-for t in mandatory[:5]:
-    print(f"  • {t['technology']:20s}")
-    print(f"      Confidence:     {t['confidence']:.2%}")
-    print(f"      LOC Overhead:   {t['loc_overhead']:,} lines")
-    print(f"      Time Overhead:  {t['time_overhead_readable']}")
-    print()
-
-if recommended:
-    print(f"\nRecommended Technologies ({len(recommended)}):")
-    print("  (Best practices for this use case)\n")
-    for t in recommended[:3]:
-        print(f"  • {t['technology']:20s}")
-        print(f"      Confidence:     {t['confidence']:.2%}")
-        print(f"      LOC Overhead:   {t['loc_overhead']:,} lines")
-        print(f"      Time Overhead:  {t['time_overhead_readable']}")
-        print()
-
-if optional:
-    print(f"\nOptional Technologies ({len(optional)}):")
-    print("  (Nice-to-have enhancements)\n")
-    for t in optional[:3]:
-        print(f"  • {t['technology']:20s}")
-        print(f"      Confidence:     {t['confidence']:.2%}")
-        print(f"      LOC Overhead:   {t['loc_overhead']:,} lines")
-        print(f"      Time Overhead:  {t['time_overhead_readable']}")
-        print()
+print(f"{'Technology':<22} {'Human %':>8} {'AI %':>8} {'Mentioned':>12}")
+print("-"*54)
+for t in sorted(tech_analysis, key=lambda x: x.get('time_spent', {}).get('human_percent', 0), reverse=True)[:10]:
+    tech = t.get('technology', '')
+    human_pct = t.get('time_spent', {}).get('human_percent', 0)
+    ai_pct = t.get('time_spent', {}).get('ai_percent', 0)
+    mentioned = 'yes' if t.get('is_mentioned_in_prompt') else 'no'
+    print(f"{tech:<22} {human_pct:>7.2f}% {ai_pct:>7.2f}% {mentioned:>12}")
 
 # Summary
 print_section("Summary of Enhancements")
 print("✓ Feature 1: Empty categories removed from output")
 print(f"    Result: Only {len(result['technologies'])} categories shown")
 print()
-print("✓ Feature 2: System design architecture predicted")
-print(f"    Result: {design['architecture']} architecture ({design['confidence']:.1%} confidence)")
+print("✓ Feature 2: Data flow exposed at root")
+print(f"    Result: {len(data_flow)} steps")
 print()
-print("✓ Feature 3: Technology criticality classified")
-print(f"    Result: {len(mandatory)} mandatory, {len(recommended)} recommended, {len(optional)} optional")
+print("✓ Feature 3: Per-technology time share computed")
+print(f"    Result: {len(tech_analysis)} technologies with percentage of overall effort")
 print()
 print("All features working correctly! ✓")
 print_section("End of Demo")

@@ -44,8 +44,10 @@ def test_new_schema():
             print(f"    Time: {result['with_ai_and_ml']['time_estimation']}")
             print(f"    Speedup: {result['with_ai_and_ml']['speedup_details']['speed_ratio']}")
 
-            print(f"\n  SYSTEM DESIGN PLAN: {result['system_design_plan']['architecture_style']}")
-            print(f"  COMPLEXITY SCORE: {result['complexity_score']}")
+            if 'data_flow' in result:
+                print(f"\n  DATA FLOW: {result['data_flow']}")
+            if 'complexity_score' in result:
+                print(f"  COMPLEXITY SCORE: {result['complexity_score']}")
     
     print("\n" + "=" * 80)
 
