@@ -4,7 +4,7 @@ Simplified Technology Extractor
 Extracts required technologies from job prompts and provides alternatives with difficulty ratings.
 """
 
-from typing import Dict, Any
+from typing import Any, Dict
 
 
 class SimpleTechExtractor:
