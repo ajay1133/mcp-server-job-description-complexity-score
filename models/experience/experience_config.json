@@ -1,0 +1,8 @@
+{
+  "version": "1.0.0",
+  "patterns": [
+    "X+ years [of] tech",
+    "tech X+ years",
+    "X+ years in/with tech"
+  ]
+}
