@@ -22,7 +22,7 @@ from __future__ import annotations
 import json
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Callable, Dict
 
 try:
@@ -40,7 +40,13 @@ def _ensure_dirs() -> None:
 
 
 def _utc_now() -> str:
-    return datetime.utcnow().isoformat() + "Z"
+    """Return an RFC 3339 style UTC timestamp.
+
+    Uses timezone-aware datetime (datetime.now(timezone.utc)) to avoid the
+    deprecation of datetime.utcnow() and ensure clarity of timezone.
+    Keeps a trailing 'Z' for backwards compatibility with existing logs.
+    """
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 class RequestLogger:
@@ -51,8 +57,8 @@ class RequestLogger:
         self.request_start_ts = time.time()
         self.request_start_iso = _utc_now()
         self.traces: list[Dict[str, Any]] = []
-        # Precise unique filename using microseconds
-        ts_name = datetime.utcnow().strftime("%Y%m%d_%H%M%S_%f")
+        # Precise unique filename using microseconds (UTC, timezone-aware)
+        ts_name = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_%f")
         self.file_path = os.path.join(TRACE_DIR, f"{ts_name}.json")
 
     def trace_call(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
