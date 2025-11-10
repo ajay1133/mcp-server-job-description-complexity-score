@@ -18,168 +18,163 @@ class SimpleTechExtractor:
                 "difficulty": 5.2,
                 "experience_required": 2.5,
                 "category": "frontend",
-                "alternatives": ["vue", "angular", "svelte", "nextjs"]
+                "alternatives": ["vue", "angular", "svelte", "nextjs"],
             },
             "vue": {
                 "difficulty": 4.8,
                 "experience_required": 2.0,
                 "category": "frontend",
-                "alternatives": ["react", "angular", "svelte"]
+                "alternatives": ["react", "angular", "svelte"],
             },
             "angular": {
                 "difficulty": 6.5,
                 "experience_required": 3.0,
                 "category": "frontend",
-                "alternatives": ["react", "vue", "svelte"]
+                "alternatives": ["react", "vue", "svelte"],
             },
             "nextjs": {
                 "difficulty": 5.5,
                 "experience_required": 2.8,
                 "category": "frontend",
-                "alternatives": ["react", "gatsby", "nuxt"]
+                "alternatives": ["react", "gatsby", "nuxt"],
             },
             "svelte": {
                 "difficulty": 4.5,
                 "experience_required": 1.8,
                 "category": "frontend",
-                "alternatives": ["react", "vue", "angular"]
+                "alternatives": ["react", "vue", "angular"],
             },
             "typescript": {
                 "difficulty": 5.8,
                 "experience_required": 2.2,
                 "category": "frontend",
-                "alternatives": ["javascript", "flow"]
+                "alternatives": ["javascript", "flow"],
             },
-
             # Backend
             "node": {
                 "difficulty": 5.0,
                 "experience_required": 2.5,
                 "category": "backend",
-                "alternatives": ["python_fastapi", "golang", "java_spring"]
+                "alternatives": ["python_fastapi", "golang", "java_spring"],
             },
             "python_fastapi": {
                 "difficulty": 4.5,
                 "experience_required": 2.0,
                 "category": "backend",
-                "alternatives": ["flask", "python_django", "node"]
+                "alternatives": ["flask", "python_django", "node"],
             },
             "flask": {
                 "difficulty": 4.2,
                 "experience_required": 1.8,
                 "category": "backend",
-                "alternatives": ["python_fastapi", "python_django", "node"]
+                "alternatives": ["python_fastapi", "python_django", "node"],
             },
             "python_django": {
                 "difficulty": 5.8,
                 "experience_required": 2.8,
                 "category": "backend",
-                "alternatives": ["flask", "python_fastapi", "ruby_rails"]
+                "alternatives": ["flask", "python_fastapi", "ruby_rails"],
             },
             "golang": {
                 "difficulty": 6.2,
                 "experience_required": 3.0,
                 "category": "backend",
-                "alternatives": ["node", "python_fastapi", "java_spring"]
+                "alternatives": ["node", "python_fastapi", "java_spring"],
             },
             "java_spring": {
                 "difficulty": 7.0,
                 "experience_required": 3.5,
                 "category": "backend",
-                "alternatives": ["golang", "python_django", "node"]
+                "alternatives": ["golang", "python_django", "node"],
             },
             "ruby_rails": {
                 "difficulty": 5.5,
                 "experience_required": 2.8,
                 "category": "backend",
-                "alternatives": ["python_django", "node", "php"]
+                "alternatives": ["python_django", "node", "php"],
             },
-
             # Database
             "postgres": {
                 "difficulty": 5.5,
                 "experience_required": 2.5,
                 "category": "database",
-                "alternatives": ["mysql", "mariadb", "mongodb"]
+                "alternatives": ["mysql", "mariadb", "mongodb"],
             },
             "mysql": {
                 "difficulty": 5.0,
                 "experience_required": 2.3,
                 "category": "database",
-                "alternatives": ["postgres", "mariadb", "mongodb"]
+                "alternatives": ["postgres", "mariadb", "mongodb"],
             },
             "mongodb": {
                 "difficulty": 4.8,
                 "experience_required": 2.0,
                 "category": "database",
-                "alternatives": ["postgres", "mysql", "dynamodb"]
+                "alternatives": ["postgres", "mysql", "dynamodb"],
             },
             "redis": {
                 "difficulty": 4.5,
                 "experience_required": 1.8,
                 "category": "cache",
-                "alternatives": ["memcached", "elasticsearch"]
+                "alternatives": ["memcached", "elasticsearch"],
             },
             "dynamodb": {
                 "difficulty": 5.8,
                 "experience_required": 2.5,
                 "category": "database",
-                "alternatives": ["mongodb", "cassandra", "postgres"]
+                "alternatives": ["mongodb", "cassandra", "postgres"],
             },
             "cassandra": {
                 "difficulty": 7.2,
                 "experience_required": 3.5,
                 "category": "database",
-                "alternatives": ["dynamodb", "mongodb", "postgres"]
+                "alternatives": ["dynamodb", "mongodb", "postgres"],
             },
-
             # Infrastructure
             "docker": {
                 "difficulty": 5.5,
                 "experience_required": 2.0,
                 "category": "infrastructure",
-                "alternatives": ["kubernetes", "podman"]
+                "alternatives": ["kubernetes", "podman"],
             },
             "kubernetes": {
                 "difficulty": 7.5,
                 "experience_required": 3.5,
                 "category": "infrastructure",
-                "alternatives": ["docker", "nomad", "ecs"]
+                "alternatives": ["docker", "nomad", "ecs"],
             },
             "aws": {
                 "difficulty": 6.5,
                 "experience_required": 3.0,
                 "category": "cloud",
-                "alternatives": ["gcp", "azure", "digitalocean"]
+                "alternatives": ["gcp", "azure", "digitalocean"],
             },
             "aws_lambda": {
                 "difficulty": 5.8,
                 "experience_required": 2.5,
                 "category": "serverless",
-                "alternatives": ["azure_functions", "google_cloud_functions"]
+                "alternatives": ["azure_functions", "google_cloud_functions"],
             },
-
             # Message Queue
             "kafka": {
                 "difficulty": 7.0,
                 "experience_required": 3.2,
                 "category": "messaging",
-                "alternatives": ["rabbitmq", "sqs", "redis"]
+                "alternatives": ["rabbitmq", "sqs", "redis"],
             },
             "rabbitmq": {
                 "difficulty": 6.2,
                 "experience_required": 2.8,
                 "category": "messaging",
-                "alternatives": ["kafka", "sqs", "redis"]
+                "alternatives": ["kafka", "sqs", "redis"],
             },
-
             # Search
             "elasticsearch": {
                 "difficulty": 6.5,
                 "experience_required": 2.8,
                 "category": "search",
-                "alternatives": ["solr", "algolia", "meilisearch"]
-            }
+                "alternatives": ["solr", "algolia", "meilisearch"],
+            },
         }
 
         # Keywords to detect technologies
@@ -209,19 +204,20 @@ class SimpleTechExtractor:
             "aws_lambda": ["lambda", "aws lambda"],
             "kafka": ["kafka"],
             "rabbitmq": ["rabbitmq", "rabbit mq"],
-            "elasticsearch": ["elasticsearch", "elastic search"]
+            "elasticsearch": ["elasticsearch", "elastic search"],
         }
 
     def _extract_experience(self, text: str, tech_name: str) -> float | None:
         """Extract explicit experience mentions for a technology (e.g., '5+ years React')."""
         import re
+
         text_lower = text.lower()
 
         # Pattern: "X+ years [of] <tech>" or "<tech> X+ years"
         patterns = [
             rf'(\d+)\+?\s*(?:years?|yrs?)\s+(?:of\s+)?{tech_name}',
             rf'{tech_name}.*?(\d+)\+?\s*(?:years?|yrs?)',
-            rf'(\d+)\+?\s*(?:years?|yrs?).*?{tech_name}'
+            rf'(\d+)\+?\s*(?:years?|yrs?).*?{tech_name}',
         ]
 
         for pattern in patterns:
@@ -234,13 +230,14 @@ class SimpleTechExtractor:
     def _extract_overall_experience(self, text: str) -> float | None:
         """Extract overall experience from prompt (e.g., '5 years experience', '3+ years')."""
         import re
+
         text_lower = text.lower()
 
         # Patterns for overall experience
         patterns = [
             r'(\d+)\+?\s*(?:years?|yrs?)\s+(?:of\s+)?(?:overall\s+)?experience',
             r'(?:overall\s+)?experience[:\s]+(\d+)\+?\s*(?:years?|yrs?)',
-            r'(\d+)\+?\s*(?:years?|yrs?)\s+(?:in\s+)?(?:the\s+)?(?:field|industry)'
+            r'(\d+)\+?\s*(?:years?|yrs?)\s+(?:in\s+)?(?:the\s+)?(?:field|industry)',
         ]
 
         for pattern in patterns:
@@ -250,12 +247,7 @@ class SimpleTechExtractor:
 
         return None
 
-    def extract_technologies(
-        self,
-        text: str,
-        is_resume: bool = False,
-        prompt_override: str = ""
-    ) -> Dict[str, Any]:
+    def extract_technologies(self, text: str, is_resume: bool = False, prompt_override: str = "") -> Dict[str, Any]:
         """
         Extract technologies from text and return with difficulty and alternatives.
 
@@ -301,15 +293,13 @@ class SimpleTechExtractor:
                 for alt_id in tech_info.get("alternatives", []):
                     alt_info = self.tech_db.get(alt_id, {})
                     if alt_info:
-                        alternatives[alt_id] = {
-                            "difficulty": alt_info.get("difficulty", 5.0)
-                        }
+                        alternatives[alt_id] = {"difficulty": alt_info.get("difficulty", 5.0)}
 
                 tech_entry = {
                     "difficulty": tech_info.get("difficulty", 5.0),
                     "category": tech_info.get("category", "other"),
                     "alternatives": alternatives,
-                    "experience_validated_via_github": None  # Placeholder for future implementation
+                    "experience_validated_via_github": None,  # Placeholder for future implementation
                 }
 
                 # Extract experience from prompt (if provided)
@@ -343,7 +333,7 @@ def main():
         "Senior Full-Stack Engineer with 5+ years React and Node.js experience",
         "Backend developer with FastAPI, PostgreSQL, and Redis",
         "DevOps engineer with 3 years Kubernetes, Docker, and AWS",
-        "Looking for React, TypeScript, and MongoDB expert"
+        "Looking for React, TypeScript, and MongoDB expert",
     ]
 
     for prompt in test_prompts:

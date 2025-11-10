@@ -61,19 +61,11 @@ def extract_technologies_(
     if has_resume:
         # Extract from resume with optional prompt override
         result = logger.trace_call(
-            extractor.extract_technologies,
-            resume_text,
-            is_resume=True,
-            prompt_override=requirement
+            extractor.extract_technologies, resume_text, is_resume=True, prompt_override=requirement
         )
     elif requirement:
         # Extract from requirement only
-        result = logger.trace_call(
-            extractor.extract_technologies,
-            requirement,
-            is_resume=False,
-            prompt_override=""
-        )
+        result = logger.trace_call(extractor.extract_technologies, requirement, is_resume=False, prompt_override="")
     else:
         result = {"error": "Either requirement, resume, or resume_file must be provided"}
 

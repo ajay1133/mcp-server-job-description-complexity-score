@@ -50,9 +50,7 @@ def extract_text_from_docx(file_path: str) -> str:
     try:
         from docx import Document  # type: ignore
     except ImportError:
-        raise ImportError(
-            "python-docx is required for .docx files. Install with: pip install python-docx"
-        )
+        raise ImportError("python-docx is required for .docx files. Install with: pip install python-docx")
 
     try:
         doc = Document(file_path)
@@ -76,9 +74,7 @@ def extract_text_from_pdf(file_path: str) -> str:
     try:
         from PyPDF2 import PdfReader  # type: ignore
     except ImportError:
-        raise ImportError(
-            "PyPDF2 is required for .pdf files. Install with: pip install PyPDF2"
-        )
+        raise ImportError("PyPDF2 is required for .pdf files. Install with: pip install PyPDF2")
 
     try:
         reader = PdfReader(file_path)
@@ -116,10 +112,7 @@ def extract_text_from_doc(file_path: str) -> str:
             text = re.sub(r'[\x00-\x08\x0B-\x0C\x0E-\x1F]', '', text)
             return clean_text(text)
     except Exception as e:
-        raise ValueError(
-            f"Failed to parse .doc file: {e}. "
-            "Consider converting to .docx or .pdf for better results."
-        )
+        raise ValueError(f"Failed to parse .doc file: {e}. " "Consider converting to .docx or .pdf for better results.")
 
 
 def parse_resume_file(file_path: str) -> str:
@@ -152,10 +145,7 @@ def parse_resume_file(file_path: str) -> str:
     elif ext == '.doc':
         return extract_text_from_doc(file_path)
     else:
-        raise ValueError(
-            f"Unsupported file format: {ext}. "
-            "Supported formats: .txt, .docx, .pdf, .doc"
-        )
+        raise ValueError(f"Unsupported file format: {ext}. " "Supported formats: .txt, .docx, .pdf, .doc")
 
 
 __all__ = ['parse_resume_file', 'clean_text']
