@@ -38,9 +38,7 @@ class ExperienceModel:
         except Exception as e:
             print(f"[ExperienceModel] Error loading validator: {e}")
 
-    def extract_tech_experience(
-        self, text: str, tech_name: str
-    ) -> float | None:
+    def extract_tech_experience(self, text: str, tech_name: str) -> float | None:
         """Extract experience years for a specific technology.
 
         Args:
@@ -69,9 +67,7 @@ class ExperienceModel:
                 years = float(match.group(1))
                 # Validate with ML if available
                 if self.validator:
-                    confidence = self._validate_extraction(
-                        text, tech_name, years
-                    )
+                    confidence = self._validate_extraction(text, tech_name, years)
                     if confidence > 0.5:
                         return years
                 else:
@@ -104,9 +100,7 @@ class ExperienceModel:
 
         return None
 
-    def _validate_extraction(
-        self, text: str, tech_name: str, years: float
-    ) -> float:
+    def _validate_extraction(self, text: str, tech_name: str, years: float) -> float:
         """Validate extraction using ML classifier.
 
         Args:
@@ -130,9 +124,7 @@ class ExperienceModel:
         except Exception:
             return 1.0  # Fallback
 
-    def _extract_validation_features(
-        self, text: str, tech_name: str, years: float
-    ) -> list[float]:
+    def _extract_validation_features(self, text: str, tech_name: str, years: float) -> list[float]:
         """Extract features for ML validation.
 
         Features:
@@ -177,9 +169,7 @@ class ExperienceModel:
 
         return features
 
-    def batch_extract(
-        self, text: str, tech_names: list[str]
-    ) -> dict[str, float | None]:
+    def batch_extract(self, text: str, tech_names: list[str]) -> dict[str, float | None]:
         """Extract experience for multiple technologies.
 
         Args:
@@ -201,9 +191,7 @@ class ExperienceModel:
         if self.validator is not None:
             import joblib
 
-            joblib.dump(
-                self.validator, output_path / "experience_validator.pkl"
-            )
+            joblib.dump(self.validator, output_path / "experience_validator.pkl")
 
         # Save config
         config = {
@@ -224,9 +212,7 @@ class ExperienceTrainer:
     def __init__(self):
         self.validator = None
 
-    def train(
-        self, training_data: list[dict[str, Any]]
-    ) -> ExperienceModel:
+    def train(self, training_data: list[dict[str, Any]]) -> ExperienceModel:
         """Train experience validation model.
 
         Args:
@@ -244,8 +230,8 @@ class ExperienceTrainer:
             Trained ExperienceModel
         """
         from sklearn.ensemble import RandomForestClassifier
-        from sklearn.model_selection import train_test_split
         from sklearn.metrics import accuracy_score, precision_score, recall_score
+        from sklearn.model_selection import train_test_split
 
         # Prepare features
         X = []
@@ -263,14 +249,10 @@ class ExperienceTrainer:
         y = np.array(y)
 
         # Split data
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42
-        )
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
         # Train validator
-        self.validator = RandomForestClassifier(
-            n_estimators=50, max_depth=5, random_state=42
-        )
+        self.validator = RandomForestClassifier(n_estimators=50, max_depth=5, random_state=42)
         self.validator.fit(X_train, y_train)
 
         # Evaluate

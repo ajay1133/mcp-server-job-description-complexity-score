@@ -10,16 +10,15 @@ but uses trained ML models for:
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any, Dict
 
 # Import ML models
 from mcp_server.ml_models import (
-    TechExtractorModel,
+    AlternativesModel,
     DifficultyModel,
     ExperienceModel,
-    AlternativesModel,
+    TechExtractorModel,
 )
 
 MODELS_DIR = Path(__file__).parent.parent / "models"
@@ -117,9 +116,7 @@ class MLTechExtractor:
         # Extract overall experience from prompt if provided
         overall_exp_from_prompt = None
         if prompt_override:
-            overall_exp_from_prompt = self.experience_model.extract_overall_experience(
-                prompt_override
-            )
+            overall_exp_from_prompt = self.experience_model.extract_overall_experience(prompt_override)
 
         # Step 2: Build technology objects
         technologies = {}
@@ -151,9 +148,7 @@ class MLTechExtractor:
             # Extract experience from prompt (if provided)
             if prompt_override:
                 # Check tech-specific experience first
-                prompt_exp = self.experience_model.extract_tech_experience(
-                    prompt_override, tech_name
-                )
+                prompt_exp = self.experience_model.extract_tech_experience(prompt_override, tech_name)
                 # Fall back to overall experience if tech-specific not found
                 if prompt_exp is None and overall_exp_from_prompt is not None:
                     prompt_exp = overall_exp_from_prompt
@@ -163,9 +158,7 @@ class MLTechExtractor:
 
             # Extract experience from resume (if is_resume=True)
             if is_resume:
-                resume_exp = self.experience_model.extract_tech_experience(
-                    text, tech_name
-                )
+                resume_exp = self.experience_model.extract_tech_experience(text, tech_name)
                 if resume_exp is not None:
                     tech_entry["experience_accounted_for_in_resume"] = resume_exp
 

@@ -75,9 +75,7 @@ class DifficultyModel:
             if config_file.exists():
                 with open(config_file, "r", encoding="utf-8") as f:
                     config = json.load(f)
-                    self.baseline_difficulty = config.get(
-                        "baseline_difficulty", self.baseline_difficulty
-                    )
+                    self.baseline_difficulty = config.get("baseline_difficulty", self.baseline_difficulty)
         except ImportError:
             print("[DifficultyModel] joblib not available, using baseline")
         except Exception as e:
@@ -104,9 +102,7 @@ class DifficultyModel:
         else:
             return self._predict_with_baseline(tech_name)
 
-    def _predict_with_model(
-        self, tech_name: str, context: dict[str, Any]
-    ) -> float:
+    def _predict_with_model(self, tech_name: str, context: dict[str, Any]) -> float:
         """Predict using trained ML model."""
         # Extract features
         features = self._extract_features(tech_name, context)
@@ -117,9 +113,7 @@ class DifficultyModel:
         # Clip to valid range
         return float(np.clip(prediction, 1.0, 10.0))
 
-    def _extract_features(
-        self, tech_name: str, context: dict[str, Any]
-    ) -> np.ndarray:
+    def _extract_features(self, tech_name: str, context: dict[str, Any]) -> np.ndarray:
         """Extract feature vector for difficulty prediction.
 
         Features:
@@ -151,9 +145,7 @@ class DifficultyModel:
         """Fallback to baseline difficulty scores."""
         return self.baseline_difficulty.get(tech_name.lower(), 5.0)
 
-    def batch_predict(
-        self, technologies: list[tuple[str, dict[str, Any]]]
-    ) -> dict[str, float]:
+    def batch_predict(self, technologies: list[tuple[str, dict[str, Any]]]) -> dict[str, float]:
         """Predict difficulty for multiple technologies.
 
         Args:
@@ -222,8 +214,8 @@ class DifficultyTrainer:
             Trained DifficultyModel
         """
         from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
-        from sklearn.model_selection import train_test_split
         from sklearn.metrics import mean_absolute_error, mean_squared_error
+        from sklearn.model_selection import train_test_split
 
         # Prepare features and targets
         X = []
@@ -243,19 +235,13 @@ class DifficultyTrainer:
         y = np.array(y)
 
         # Split data
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42
-        )
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
         # Train model
         if model_type == "gradient_boosting":
-            self.model = GradientBoostingRegressor(
-                n_estimators=100, max_depth=4, learning_rate=0.1, random_state=42
-            )
+            self.model = GradientBoostingRegressor(n_estimators=100, max_depth=4, learning_rate=0.1, random_state=42)
         elif model_type == "random_forest":
-            self.model = RandomForestRegressor(
-                n_estimators=100, max_depth=8, random_state=42
-            )
+            self.model = RandomForestRegressor(n_estimators=100, max_depth=8, random_state=42)
         else:
             raise ValueError(f"Unknown model_type: {model_type}")
 

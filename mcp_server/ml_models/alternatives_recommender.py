@@ -130,9 +130,7 @@ class AlternativesModel:
                     continue
 
             # Compute cosine similarity
-            similarity = self._cosine_similarity(
-                source_embedding, candidate_embedding
-            )
+            similarity = self._cosine_similarity(source_embedding, candidate_embedding)
             similarities.append((candidate_tech, float(similarity)))
 
         # Sort by similarity
@@ -140,18 +138,14 @@ class AlternativesModel:
 
         return similarities[:top_k]
 
-    def _recommend_with_baseline(
-        self, tech_name: str, top_k: int
-    ) -> list[tuple[str, float]]:
+    def _recommend_with_baseline(self, tech_name: str, top_k: int) -> list[tuple[str, float]]:
         """Fallback to hardcoded alternatives."""
         alternatives = self.baseline_alternatives.get(tech_name.lower(), [])
 
         # Return with dummy similarity scores
         return [(alt, 0.8 - i * 0.1) for i, alt in enumerate(alternatives[:top_k])]
 
-    def _cosine_similarity(
-        self, vec1: np.ndarray, vec2: np.ndarray
-    ) -> float:
+    def _cosine_similarity(self, vec1: np.ndarray, vec2: np.ndarray) -> float:
         """Compute cosine similarity between two vectors."""
         dot_product = np.dot(vec1, vec2)
         norm1 = np.linalg.norm(vec1)
@@ -162,9 +156,7 @@ class AlternativesModel:
 
         return dot_product / (norm1 * norm2)
 
-    def batch_recommend(
-        self, tech_names: list[str], top_k: int = 4
-    ) -> dict[str, list[tuple[str, float]]]:
+    def batch_recommend(self, tech_names: list[str], top_k: int = 4) -> dict[str, list[tuple[str, float]]]:
         """Recommend alternatives for multiple technologies.
 
         Args:
@@ -186,9 +178,7 @@ class AlternativesModel:
         if self.embeddings:
             # Save embeddings
             tech_names = list(self.embeddings.keys())
-            embeddings_array = np.array(
-                [self.embeddings[tech] for tech in tech_names]
-            )
+            embeddings_array = np.array([self.embeddings[tech] for tech in tech_names])
             np.save(output_path / "tech_embeddings.npy", embeddings_array)
 
             # Save metadata
@@ -250,8 +240,8 @@ class AlternativesTrainer:
         # Simple approach: Use TF-IDF + dimensionality reduction
         # In production, use Word2Vec, BERT, or graph embeddings
 
-        from sklearn.feature_extraction.text import TfidfVectorizer
         from sklearn.decomposition import TruncatedSVD
+        from sklearn.feature_extraction.text import TfidfVectorizer
 
         # Prepare text corpus
         tech_names = []
@@ -293,17 +283,13 @@ class AlternativesTrainer:
 
         return model
 
-    def _evaluate_embeddings(
-        self, similarity_pairs: list[tuple[str, str, float]]
-    ) -> None:
+    def _evaluate_embeddings(self, similarity_pairs: list[tuple[str, str, float]]) -> None:
         """Evaluate embeddings on known similarity pairs."""
         errors = []
 
         for tech1, tech2, true_similarity in similarity_pairs:
             if tech1 in self.embeddings and tech2 in self.embeddings:
-                pred_similarity = self._cosine_similarity(
-                    self.embeddings[tech1], self.embeddings[tech2]
-                )
+                pred_similarity = self._cosine_similarity(self.embeddings[tech1], self.embeddings[tech2])
                 error = abs(pred_similarity - true_similarity)
                 errors.append(error)
 
@@ -311,9 +297,7 @@ class AlternativesTrainer:
             mae = np.mean(errors)
             print(f"[AlternativesTrainer] Similarity MAE: {mae:.3f}")
 
-    def _cosine_similarity(
-        self, vec1: np.ndarray, vec2: np.ndarray
-    ) -> float:
+    def _cosine_similarity(self, vec1: np.ndarray, vec2: np.ndarray) -> float:
         """Compute cosine similarity."""
         dot_product = np.dot(vec1, vec2)
         norm1 = np.linalg.norm(vec1)

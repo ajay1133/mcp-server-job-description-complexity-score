@@ -96,16 +96,13 @@ class TechExtractorModel:
     def _load_model(self) -> None:
         """Load trained transformer model."""
         try:
-            import torch
             from transformers import (
                 AutoModelForTokenClassification,
                 AutoTokenizer,
             )
 
             self.tokenizer = AutoTokenizer.from_pretrained(str(self.model_path))
-            self.model = AutoModelForTokenClassification.from_pretrained(
-                str(self.model_path)
-            )
+            self.model = AutoModelForTokenClassification.from_pretrained(str(self.model_path))
             self.model.eval()
 
             # Load label mapping
@@ -116,9 +113,7 @@ class TechExtractorModel:
                     self.id2label = config.get("id2label", {})
                     self.label2id = config.get("label2id", {})
         except ImportError:
-            print(
-                "[TechExtractorModel] transformers/torch not available, using patterns"
-            )
+            print("[TechExtractorModel] transformers/torch not available, using patterns")
             self._initialize_patterns()
         except Exception as e:
             print(f"[TechExtractorModel] Error loading model: {e}, using patterns")
@@ -174,9 +169,7 @@ class TechExtractorModel:
         current_tech = None
         current_span_start = None
 
-        for idx, (token, pred_id, probs) in enumerate(
-            zip(tokens, predictions, probabilities)
-        ):
+        for idx, (token, pred_id, probs) in enumerate(zip(tokens, predictions, probabilities)):
             label = self.id2label.get(str(pred_id), "O")
             confidence = float(np.max(probs))
 
@@ -198,9 +191,7 @@ class TechExtractorModel:
             elif label.startswith("I-") and current_tech:
                 # Continue current entity
                 current_tech["span"] = (current_span_start, idx + 1)
-                current_tech["confidence"] = (
-                    current_tech["confidence"] + confidence
-                ) / 2
+                current_tech["confidence"] = (current_tech["confidence"] + confidence) / 2
 
             elif label == "O" and current_tech:
                 # End current entity
@@ -236,9 +227,7 @@ class TechExtractorModel:
         unique_techs = {}
         for tech in technologies:
             name = tech["name"]
-            if name not in unique_techs or tech["confidence"] > unique_techs[name][
-                "confidence"
-            ]:
+            if name not in unique_techs or tech["confidence"] > unique_techs[name]["confidence"]:
                 unique_techs[name] = tech
 
         return list(unique_techs.values())

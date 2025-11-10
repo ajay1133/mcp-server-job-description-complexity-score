@@ -1,9 +1,9 @@
 """Machine Learning models for technology extraction and analysis."""
 
-from .tech_extractor import TechExtractorModel
+from .alternatives_recommender import AlternativesModel
 from .difficulty_scorer import DifficultyModel
 from .experience_extractor import ExperienceModel
-from .alternatives_recommender import AlternativesModel
+from .tech_extractor import TechExtractorModel
 
 __all__ = [
     "TechExtractorModel",
