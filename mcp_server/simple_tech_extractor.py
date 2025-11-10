@@ -4,12 +4,12 @@ Simplified Technology Extractor
 Extracts required technologies from job prompts and provides alternatives with difficulty ratings.
 """
 
-from typing import Dict, List, Any
+from typing import Dict, Any
 
 
 class SimpleTechExtractor:
     """Extracts technologies from text and provides difficulty ratings and alternatives."""
-    
+
     def __init__(self):
         # Technology database with difficulty (1-10), experience required (years), and alternatives
         self.tech_db = {
@@ -50,7 +50,7 @@ class SimpleTechExtractor:
                 "category": "frontend",
                 "alternatives": ["javascript", "flow"]
             },
-            
+
             # Backend
             "node": {
                 "difficulty": 5.0,
@@ -94,7 +94,7 @@ class SimpleTechExtractor:
                 "category": "backend",
                 "alternatives": ["python_django", "node", "php"]
             },
-            
+
             # Database
             "postgres": {
                 "difficulty": 5.5,
@@ -132,7 +132,7 @@ class SimpleTechExtractor:
                 "category": "database",
                 "alternatives": ["dynamodb", "mongodb", "postgres"]
             },
-            
+
             # Infrastructure
             "docker": {
                 "difficulty": 5.5,
@@ -158,7 +158,7 @@ class SimpleTechExtractor:
                 "category": "serverless",
                 "alternatives": ["azure_functions", "google_cloud_functions"]
             },
-            
+
             # Message Queue
             "kafka": {
                 "difficulty": 7.0,
@@ -172,7 +172,7 @@ class SimpleTechExtractor:
                 "category": "messaging",
                 "alternatives": ["kafka", "sqs", "redis"]
             },
-            
+
             # Search
             "elasticsearch": {
                 "difficulty": 6.5,
@@ -181,7 +181,7 @@ class SimpleTechExtractor:
                 "alternatives": ["solr", "algolia", "meilisearch"]
             }
         }
-        
+
         # Keywords to detect technologies
         self.tech_keywords = {
             "react": ["react", "react.js", "reactjs"],
@@ -211,59 +211,59 @@ class SimpleTechExtractor:
             "rabbitmq": ["rabbitmq", "rabbit mq"],
             "elasticsearch": ["elasticsearch", "elastic search"]
         }
-    
+
     def _extract_experience(self, text: str, tech_name: str) -> float | None:
         """Extract explicit experience mentions for a technology (e.g., '5+ years React')."""
         import re
         text_lower = text.lower()
-        
+
         # Pattern: "X+ years [of] <tech>" or "<tech> X+ years"
         patterns = [
             rf'(\d+)\+?\s*(?:years?|yrs?)\s+(?:of\s+)?{tech_name}',
             rf'{tech_name}.*?(\d+)\+?\s*(?:years?|yrs?)',
             rf'(\d+)\+?\s*(?:years?|yrs?).*?{tech_name}'
         ]
-        
+
         for pattern in patterns:
             match = re.search(pattern, text_lower)
             if match:
                 return float(match.group(1))
-        
+
         return None
-    
+
     def _extract_overall_experience(self, text: str) -> float | None:
         """Extract overall experience from prompt (e.g., '5 years experience', '3+ years')."""
         import re
         text_lower = text.lower()
-        
+
         # Patterns for overall experience
         patterns = [
             r'(\d+)\+?\s*(?:years?|yrs?)\s+(?:of\s+)?(?:overall\s+)?experience',
             r'(?:overall\s+)?experience[:\s]+(\d+)\+?\s*(?:years?|yrs?)',
             r'(\d+)\+?\s*(?:years?|yrs?)\s+(?:in\s+)?(?:the\s+)?(?:field|industry)'
         ]
-        
+
         for pattern in patterns:
             match = re.search(pattern, text_lower)
             if match:
                 return float(match.group(1))
-        
+
         return None
 
     def extract_technologies(
-        self, 
-        text: str, 
+        self,
+        text: str,
         is_resume: bool = False,
         prompt_override: str = ""
     ) -> Dict[str, Any]:
         """
         Extract technologies from text and return with difficulty and alternatives.
-        
+
         Args:
             text: Job description, prompt, or resume text
             is_resume: If True, treats input as resume
             prompt_override: Additional prompt context to merge with resume
-        
+
         Returns:
             {
                 "technologies": {
@@ -282,20 +282,20 @@ class SimpleTechExtractor:
         combined_text = text
         if prompt_override:
             combined_text = f"{text}\n\n{prompt_override}"
-        
+
         text_lower = combined_text.lower()
         detected = {}
-        
+
         # Extract overall experience from prompt if provided
         overall_exp_from_prompt = None
         if prompt_override:
             overall_exp_from_prompt = self._extract_overall_experience(prompt_override)
-        
+
         # Detect technologies mentioned in text
         for tech_id, keywords in self.tech_keywords.items():
             if any(kw in text_lower for kw in keywords):
                 tech_info = self.tech_db.get(tech_id, {})
-                
+
                 # Build alternatives dict (without experience_required)
                 alternatives = {}
                 for alt_id in tech_info.get("alternatives", []):
@@ -304,14 +304,14 @@ class SimpleTechExtractor:
                         alternatives[alt_id] = {
                             "difficulty": alt_info.get("difficulty", 5.0)
                         }
-                
+
                 tech_entry = {
                     "difficulty": tech_info.get("difficulty", 5.0),
                     "category": tech_info.get("category", "other"),
                     "alternatives": alternatives,
                     "experience_validated_via_github": None  # Placeholder for future implementation
                 }
-                
+
                 # Extract experience from prompt (if provided)
                 prompt_exp = None
                 if prompt_override:
@@ -320,32 +320,32 @@ class SimpleTechExtractor:
                     # Fall back to overall experience if tech-specific not found
                     if prompt_exp is None and overall_exp_from_prompt is not None:
                         prompt_exp = overall_exp_from_prompt
-                
+
                 if prompt_exp is not None:
                     tech_entry["experience_mentioned_in_prompt"] = prompt_exp
-                
+
                 # Extract experience from resume text (if is_resume=True)
                 if is_resume:
                     resume_exp = self._extract_experience(text, tech_id)
                     if resume_exp is not None:
                         tech_entry["experience_accounted_for_in_resume"] = resume_exp
-                
+
                 detected[tech_id] = tech_entry
-        
+
         return {"technologies": detected}
 
 
 def main():
     """Test the extractor with sample prompts."""
     extractor = SimpleTechExtractor()
-    
+
     test_prompts = [
         "Senior Full-Stack Engineer with 5+ years React and Node.js experience",
         "Backend developer with FastAPI, PostgreSQL, and Redis",
         "DevOps engineer with 3 years Kubernetes, Docker, and AWS",
         "Looking for React, TypeScript, and MongoDB expert"
     ]
-    
+
     for prompt in test_prompts:
         print(f"\nPrompt: {prompt}")
         result = extractor.extract_technologies(prompt)
