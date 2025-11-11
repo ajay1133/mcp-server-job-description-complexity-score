@@ -281,24 +281,33 @@ class SimpleTechExtractor:
         }
 
     def _extract_experience(self, text: str, tech_name: str) -> float | None:
-        """Extract explicit experience mentions for a technology (e.g., '5+ years React')."""
+        """Extract explicit experience mentions for a technology (e.g., '5+ years React', '2 years in react').
+
+        Only matches if years and tech are close together (within ~20 chars) to avoid false positives.
+        """
         import re
 
         text_lower = text.lower()
 
-        # Pattern capture years and whether a '+' (minimum) is present
+        # Pattern order matters! Most specific first to avoid greedy matches
+        # Using word boundaries and limiting distance to avoid false matches
         patterns = [
-            rf'(\d+)(\+)?\s*(?:years?|yrs?)\s+(?:of\s+)?{tech_name}',
-            rf'{tech_name}.*?(\d+)(\+)?\s*(?:years?|yrs?)',
-            rf'(\d+)(\+)?\s*(?:years?|yrs?).*?{tech_name}',
-            rf'(?:at\s+least|min(?:imum)?\s+)(\d+)\s*(?:years?|yrs?).*?{tech_name}',
+            # Most specific: "N years in/of/with <tech>" (handles "2 years in react")
+            rf'(\d+)(\+)?\s*(?:years?|yrs?)\s+(?:in|of|with)\s+{re.escape(tech_name)}\b',
+            # "N years <tech>" (no preposition)
+            rf'(\d+)(\+)?\s*(?:years?|yrs?)\s+{re.escape(tech_name)}\b',
+            # "<tech> N years" (reverse order, but limited to nearby context)
+            rf'{re.escape(tech_name)}\b\s+(?:\w+\s+){{0,3}}(\d+)(\+)?\s*(?:years?|yrs?)',
+            # "at least N years <tech>"
+            rf'(?:at\s+least|min(?:imum)?)\s+(\d+)\s*(?:years?|yrs?)\s+(?:\w+\s+){{0,2}}{re.escape(tech_name)}\b',
         ]
 
         for pattern in patterns:
             match = re.search(pattern, text_lower)
             if match:
                 years = float(match.group(1))
-                plus = bool(match.group(2)) or ('at least' in pattern or 'min' in pattern)
+                plus = bool(match.group(2)) if match.lastindex >= 2 else False
+                plus = plus or ('at least' in pattern or 'min' in pattern)
                 return -years if plus else years
 
         return None
@@ -368,20 +377,22 @@ class SimpleTechExtractor:
     ) -> str | float | None:
         """Get experience_mentioned value based on priority rules.
 
-        Priority:
-        1) years from resume (number or range)
-        2) overall years from resume (number or range)
-        3) years from prompt (number or range)
-        4) overall years from prompt (number or range)
+        Priority (tech-specific ALWAYS wins over overall):
+        1) years from resume (tech-specific)
+        2) years from prompt (tech-specific)
+        3) overall years from resume
+        4) overall years from prompt
 
         Seniority terms are ignored for experience_mentioned (no hard-coded mapping).
         """
+        # Tech-specific experience always takes priority
         if years_resume is not None:
             return self._format_year_value(years_resume)
-        if overall_years_resume is not None:
-            return self._format_year_value(overall_years_resume)
         if years_prompt is not None:
             return self._format_year_value(years_prompt)
+        # Fall back to overall only if no tech-specific experience
+        if overall_years_resume is not None:
+            return self._format_year_value(overall_years_resume)
         if overall_years_prompt is not None:
             return self._format_year_value(overall_years_prompt)
         return None
@@ -456,10 +467,14 @@ class SimpleTechExtractor:
 
                 # Extract experience from prompt (if provided)
                 prompt_exp = None
-                if prompt_override:
-                    # Check tech-specific experience first
+                if is_resume and prompt_override:
+                    # When is_resume=True, prompt_override contains the job prompt
                     prompt_exp = self._extract_experience(prompt_override, tech_id)
-                    # Fall back to overall experience if tech-specific not found
+                    if prompt_exp is None and overall_exp_from_prompt is not None:
+                        prompt_exp = overall_exp_from_prompt
+                elif not is_resume:
+                    # When is_resume=False, text IS the prompt - extract from it
+                    prompt_exp = self._extract_experience(text, tech_id)
                     if prompt_exp is None and overall_exp_from_prompt is not None:
                         prompt_exp = overall_exp_from_prompt
 
@@ -474,7 +489,7 @@ class SimpleTechExtractor:
                         # Keep resume-specific field numeric for compatibility
                         tech_entry["experience_accounted_for_in_resume"] = abs(resume_exp)
 
-                # Calculate experience_mentioned value (resume has higher priority)
+                # Calculate experience_mentioned value (tech-specific takes priority over overall)
                 years_resume = self._extract_experience(text, tech_id) if is_resume else None
                 years_prompt = prompt_exp
                 exp_mentioned = self._get_experience_mentioned_value(
@@ -488,91 +503,91 @@ class SimpleTechExtractor:
                 if exp_mentioned is not None:
                     tech_entry["experience_mentioned"] = exp_mentioned
 
-                # Propagate global estimate to alternatives (do not use tech-specific years to avoid overreach)
-                alt_global_exp = self._get_experience_mentioned_value(
-                    None,
-                    None,
+                # Propagate SAME experience to alternatives (use tech-specific if available, otherwise overall)
+                # This ensures "2 years React" gives "2 years" to Vue/Angular, not the overall "9+ years"
+                if exp_mentioned is not None:
+                    for alt_id in tech_entry["alternatives"]:
+                        tech_entry["alternatives"][alt_id]["experience_mentioned"] = exp_mentioned
+
+                detected[tech_id] = tech_entry
+
+        # Always try to discover unknown technologies using TechRegistry (not just when detected is empty)
+        # This allows ServiceNow, Twilio, CI/CD, etc. to be found alongside React/Node
+        import re
+
+        # Look for common tech name patterns (lowercase to match)
+        # Expanded patterns to include more technologies
+        potential_techs = re.findall(
+            r'\b(?:grafana|prometheus|jenkins|terraform|ansible|datadog|splunk|newrelic|new\s*relic|'
+            r'elasticsearch|kibana|logstash|nginx|apache|redis|memcached|'
+            r'mongodb|mysql|cassandra|neo4j|influxdb|timescaledb|dynamodb|'
+            r'kubernetes|k8s|helm|istio|linkerd|envoy|'
+            r'jenkins|gitlab|circleci|travis|github\s*actions?|'
+            r'terraform|ansible|puppet|chef|salt|packer|vagrant|'
+            r'vue|angular|svelte|ember|backbone|'
+            r'flask|django|fastapi|spring|hibernate|'
+            r'ruby|rails|laravel|symfony|express|nestjs|'
+            r'servicenow|twilio|sendgrid|stripe|'
+            r'ci/cd|cicd|continuous\s+integration|continuous\s+delivery)\b',
+            text_lower,
+        )
+
+        for potential_tech in set(potential_techs):  # use set to dedupe
+            # Skip if already detected
+            tech_id = potential_tech.replace('/', '').replace(' ', '_')  # normalize name
+            if tech_id in detected or potential_tech in detected:
+                continue
+
+            # Try to get info from tech registry
+            tech_info = self.tech_registry.get_tech_info(potential_tech)
+            if tech_info:
+                # Found a technology!
+                tech_id = potential_tech
+
+                # Get similar technologies as alternatives
+                try:
+                    similar_names = self.tech_registry.search_similar_techs(tech_id, top_k=3)
+                    alternatives = {}
+                    for sim_name in similar_names:
+                        sim_info = self.tech_registry.get_tech_info(sim_name)
+                        if sim_info and sim_name != tech_id:
+                            alternatives[sim_name] = {"difficulty": sim_info.get("difficulty", 5.0)}
+                except Exception:
+                    # Fallback if similarity search fails
+                    alternatives = {}
+
+                raw_cat = tech_info.get("category", "other")
+                refined_cat = raw_cat if raw_cat != "other" else self.tech_registry.infer_category_by_name(tech_id)
+                if refined_cat == "other":
+                    refined_cat = "uncategorized"
+                tech_entry = {
+                    "difficulty": tech_info.get("difficulty", 5.0),
+                    "category": refined_cat,
+                    "alternatives": alternatives,
+                }
+
+                # Add experience_validated_via_github only if resume is provided
+                if is_resume:
+                    tech_entry["experience_validated_via_github"] = None
+
+                # Calculate experience_mentioned value (tech-specific takes priority over overall)
+                years_resume = self._extract_experience(text, tech_id) if is_resume else None
+                years_prompt = self._extract_experience(text, tech_id) if not is_resume else None
+                exp_mentioned = self._get_experience_mentioned_value(
+                    years_resume,
+                    years_prompt,
                     seniority_from_resume,
                     seniority_from_prompt,
                     overall_exp_from_resume,
                     overall_exp_from_prompt,
                 )
-                if alt_global_exp is not None:
+                if exp_mentioned is not None:
+                    tech_entry["experience_mentioned"] = exp_mentioned
+                    # Propagate same experience to alternatives
                     for alt_id in tech_entry["alternatives"]:
-                        tech_entry["alternatives"][alt_id]["experience_mentioned"] = alt_global_exp
+                        tech_entry["alternatives"][alt_id]["experience_mentioned"] = exp_mentioned
 
                 detected[tech_id] = tech_entry
-
-        # Try to discover unknown technologies using TechRegistry
-        if not detected:
-            # Extract potential technology names from text (words that look like tech names)
-            import re
-
-            # Look for common tech name patterns (lowercase to match)
-            potential_techs = re.findall(
-                r'\b(?:grafana|prometheus|jenkins|terraform|ansible|datadog|splunk|'
-                r'elasticsearch|kibana|logstash|nginx|apache|redis|memcached|'
-                r'mongodb|mysql|cassandra|neo4j|influxdb|timescaledb|'
-                r'kubernetes|k8s|helm|istio|linkerd|envoy|'
-                r'jenkins|gitlab|circleci|travis|github\s*actions?|'
-                r'terraform|ansible|puppet|chef|salt|'
-                r'vue|angular|svelte|ember|backbone|'
-                r'flask|django|fastapi|spring|hibernate|'
-                r'ruby|rails|laravel|symfony|express|nestjs)\b',
-                text_lower,
-            )
-
-            for potential_tech in set(potential_techs):  # use set to dedupe
-                # Try to get info from tech registry
-                tech_info = self.tech_registry.get_tech_info(potential_tech)
-                if tech_info:
-                    # Found a technology!
-                    tech_id = potential_tech
-
-                    # Get similar technologies as alternatives
-                    try:
-                        similar_names = self.tech_registry.search_similar_techs(tech_id, top_k=3)
-                        alternatives = {}
-                        for sim_name in similar_names:
-                            sim_info = self.tech_registry.get_tech_info(sim_name)
-                            if sim_info and sim_name != tech_id:
-                                alternatives[sim_name] = {"difficulty": sim_info.get("difficulty", 5.0)}
-                    except Exception:
-                        # Fallback if similarity search fails
-                        alternatives = {}
-
-                    raw_cat = tech_info.get("category", "other")
-                    refined_cat = raw_cat if raw_cat != "other" else self.tech_registry.infer_category_by_name(tech_id)
-                    if refined_cat == "other":
-                        refined_cat = "uncategorized"
-                    tech_entry = {
-                        "difficulty": tech_info.get("difficulty", 5.0),
-                        "category": refined_cat,
-                        "alternatives": alternatives,
-                    }
-
-                    # Add experience_validated_via_github only if resume is provided
-                    if is_resume:
-                        tech_entry["experience_validated_via_github"] = None
-
-                    # Calculate experience_mentioned value
-                    years_resume = self._extract_experience(text, tech_id) if is_resume else None
-                    years_prompt = self._extract_experience(text, tech_id) if not is_resume else None
-                    exp_mentioned = self._get_experience_mentioned_value(
-                        years_resume,
-                        years_prompt,
-                        seniority_from_resume,
-                        seniority_from_prompt,
-                        overall_exp_from_resume,
-                        overall_exp_from_prompt,
-                    )
-                    if exp_mentioned is not None:
-                        tech_entry["experience_mentioned"] = exp_mentioned
-                        # Propagate to alternatives
-                        for alt_id in tech_entry["alternatives"]:
-                            tech_entry["alternatives"][alt_id]["experience_mentioned"] = exp_mentioned
-
-                    detected[tech_id] = tech_entry
 
         # If nothing detected, fall back to role defaults based on generic phrases
         if not detected:

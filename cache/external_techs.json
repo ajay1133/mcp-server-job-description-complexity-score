@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-11-11T13:24:37.714832",
+  "timestamp": "2025-11-11T16:17:59.189149",
   "data": {
     "grafana": {
       "difficulty": 5.2,
@@ -60,6 +60,36 @@
       "confidence": 0.7,
       "source": "heuristic",
       "explanation": "Ansible difficulty: 4.5/10. Very popular (66,977 stars) with extensive resources. Mature technology (13.7 years). Large StackOverflow community (23,097 questions)"
+    },
+    "servicenow": {
+      "difficulty": 5.9,
+      "category": "other",
+      "keywords": [
+        "servicenow"
+      ],
+      "confidence": 0.7,
+      "source": "heuristic",
+      "explanation": "Servicenow difficulty: 5.9/10. Limited community (999 stars), fewer resources"
+    },
+    "twilio": {
+      "difficulty": 5.8,
+      "category": "other",
+      "keywords": [
+        "twilio"
+      ],
+      "confidence": 0.7,
+      "source": "heuristic",
+      "explanation": "Twilio difficulty: 5.8/10. Limited community (999 stars), fewer resources. Large StackOverflow community (10,702 questions)"
+    },
+    "django": {
+      "difficulty": 5.9,
+      "category": "other",
+      "keywords": [
+        "django"
+      ],
+      "confidence": 0.7,
+      "source": "heuristic",
+      "explanation": "Django difficulty: 5.9/10. Limited community (999 stars), fewer resources. Large StackOverflow community (312,599 questions)"
     }
   }
 }

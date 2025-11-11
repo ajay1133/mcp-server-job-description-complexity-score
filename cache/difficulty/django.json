@@ -1,0 +1,17 @@
+{
+  "difficulty": 5.9,
+  "confidence": 0.7,
+  "source": "heuristic",
+  "features": {
+    "github_stars_log": 6.90875477931522,
+    "github_forks_log": 4.61512051684126,
+    "github_issues_ratio": 50.0,
+    "years_in_market": 5.0,
+    "npm_downloads_log": 6.306275286948016,
+    "stackoverflow_questions_log": 12.652679696969514,
+    "maintenance_score": -43.09124522068478,
+    "maturity_score": 3.4543773896576098
+  },
+  "explanation": "Django difficulty: 5.9/10. Limited community (999 stars), fewer resources. Large StackOverflow community (312,599 questions)",
+  "timestamp": "2025-11-11T16:17:59.185273"
+}
