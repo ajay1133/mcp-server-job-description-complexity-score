@@ -122,8 +122,8 @@ def main() -> int:
 
 def train_difficulty_model(quick: bool = False):
     """Train difficulty scoring model."""
-    from training_data.sample_data import DIFFICULTY_TRAINING_DATA
     from mcp_server.ml_models.difficulty_scorer import DifficultyTrainer
+    from training_data.sample_data import DIFFICULTY_TRAINING_DATA
 
     trainer = DifficultyTrainer()
 
@@ -138,6 +138,7 @@ def train_difficulty_model(quick: bool = False):
     if len(training_data) < 4:
         print("[train] Not enough data for full training, using baseline")
         from mcp_server.ml_models.difficulty_scorer import DifficultyModel
+
         return DifficultyModel()
 
     model = trainer.train(training_data, model_type="gradient_boosting")
@@ -146,8 +147,8 @@ def train_difficulty_model(quick: bool = False):
 
 def train_experience_model(quick: bool = False):
     """Train experience extraction validation model."""
-    from training_data.sample_data import EXPERIENCE_TRAINING_DATA
     from mcp_server.ml_models.experience_extractor import ExperienceTrainer
+    from training_data.sample_data import EXPERIENCE_TRAINING_DATA
 
     trainer = ExperienceTrainer()
     training_data = EXPERIENCE_TRAINING_DATA
@@ -159,6 +160,7 @@ def train_experience_model(quick: bool = False):
     if len(training_data) < 4:
         print("[train] Not enough data for full training, using regex only")
         from mcp_server.ml_models.experience_extractor import ExperienceModel
+
         return ExperienceModel()
 
     model = trainer.train(training_data)
@@ -167,11 +169,8 @@ def train_experience_model(quick: bool = False):
 
 def train_alternatives_model(quick: bool = False):
     """Train alternatives recommendation model."""
-    from training_data.sample_data import (
-        TECHNOLOGY_CORPUS,
-        SIMILARITY_PAIRS,
-    )
     from mcp_server.ml_models.alternatives_recommender import AlternativesTrainer
+    from training_data.sample_data import SIMILARITY_PAIRS, TECHNOLOGY_CORPUS
 
     corpus = TECHNOLOGY_CORPUS
     pairs = SIMILARITY_PAIRS

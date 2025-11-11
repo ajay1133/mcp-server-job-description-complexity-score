@@ -1,7 +1,6 @@
 """Demo script showing ML-powered technology extraction capabilities."""
 
 from mcp_server.ml_tech_extractor import MLTechExtractor
-import json
 
 
 def main():
@@ -20,23 +19,23 @@ def main():
     print("[2/4] Extracting from job description...")
     job_desc = """
     Senior Full-Stack Engineer
-    
-    We're looking for an experienced engineer with 5+ years of React and 
+
+    We're looking for an experienced engineer with 5+ years of React and
     Node.js development. Strong knowledge of PostgreSQL and Docker required.
     Kubernetes experience is a plus.
     """
-    
+
     result = extractor.extract_technologies(job_desc, is_resume=False)
-    
+
     print("Technologies detected:")
     for tech_name, info in result["technologies"].items():
         print(f"  • {tech_name.upper()}")
         print(f"    - Difficulty: {info['difficulty']:.1f}/10 (ML-predicted)")
         print(f"    - Category: {info['category']}")
-        
+
         if "experience_mentioned_in_prompt" in info:
             print(f"    - Experience required: {info['experience_mentioned_in_prompt']} years")
-        
+
         if info["alternatives"]:
             alts = list(info["alternatives"].keys())[:2]
             print(f"    - Alternatives: {', '.join(alts)}")
@@ -46,15 +45,15 @@ def main():
     print("[3/4] Extracting from resume...")
     resume = """
     Software Engineer
-    
+
     • 3 years experience building web applications with React and TypeScript
     • Backend development with Node.js (2 years) and Express
     • Database design with PostgreSQL
     • Containerization using Docker
     """
-    
+
     result = extractor.extract_technologies(resume, is_resume=True)
-    
+
     print("Resume technologies:")
     for tech_name, info in result["technologies"].items():
         exp_str = ""
@@ -65,34 +64,30 @@ def main():
 
     # Example 3: Resume + Job matching
     print("[4/4] Matching resume to job requirements...")
-    
+
     job_requirement = "Looking for 5+ years React experience"
-    
-    result = extractor.extract_technologies(
-        text=resume,
-        is_resume=True,
-        prompt_override=job_requirement
-    )
-    
+
+    result = extractor.extract_technologies(text=resume, is_resume=True, prompt_override=job_requirement)
+
     print("Requirement Analysis:")
     for tech_name, info in result["technologies"].items():
         if tech_name == "react":
             prompt_exp = info.get("experience_mentioned_in_prompt", 0)
             resume_exp = info.get("experience_accounted_for_in_resume", 0)
-            
-            print(f"\n  React:")
+
+            print("\n  React:")
             print(f"    Required: {prompt_exp} years")
             print(f"    Candidate has: {resume_exp} years")
-            
+
             if resume_exp >= prompt_exp:
-                print(f"    ✓ Meets requirement")
+                print("    ✓ Meets requirement")
             else:
                 gap = prompt_exp - resume_exp
                 print(f"    ✗ Gap: {gap} years")
-                
+
                 # Suggest alternatives
                 if info["alternatives"]:
-                    print(f"    💡 Candidate may have transferable skills in:")
+                    print("    💡 Candidate may have transferable skills in:")
                     for alt, alt_info in list(info["alternatives"].items())[:2]:
                         print(f"       - {alt} (similar difficulty: {alt_info['difficulty']:.1f}/10)")
 

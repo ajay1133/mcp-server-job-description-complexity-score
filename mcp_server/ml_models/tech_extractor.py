@@ -96,10 +96,7 @@ class TechExtractorModel:
     def _load_model(self) -> None:
         """Load trained transformer model."""
         try:
-            from transformers import (
-                AutoModelForTokenClassification,
-                AutoTokenizer,
-            )
+            from transformers import AutoModelForTokenClassification, AutoTokenizer
 
             self.tokenizer = AutoTokenizer.from_pretrained(str(self.model_path))
             self.model = AutoModelForTokenClassification.from_pretrained(str(self.model_path))

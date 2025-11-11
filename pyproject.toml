@@ -1,7 +1,7 @@
 [project]
-name = "repl-nix-workspace"
+name = "mcp-server-scoring-job-decriptions"
 version = "0.1.0"
-description = "Add your description here"
+description = "MCP Server to extract skills from job descriptions/resumes"
 requires-python = ">=3.10"
 dependencies = [
     "django>=5.2.7",
@@ -17,6 +17,11 @@ dependencies = [
     "python-magic-bin>=0.4.14; platform_system=='Windows'",
     "torch>=2.0.0",
     "transformers>=4.30.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pre-commit>=3.6.0",
 ]
 
 [project.scripts]
@@ -63,3 +68,7 @@ extend_skip = [
     "mcp_server/mcp_inspector.py",
     "mcp_server/server.py",
 ]
+
+[tool.flake8]
+max-line-length = 120
+extend-ignore = ["E203", "W503"]

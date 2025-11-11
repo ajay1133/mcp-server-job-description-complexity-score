@@ -65,7 +65,7 @@ SKIP_MODEL_TRAIN=1 python train_system_design_models.py
 
 Sample data is provided in `training_data/sample_data.py`. In production, augment with:
 
-1. **Job Postings**: 
+1. **Job Postings**:
    - Use APIs: Indeed, LinkedIn, Stack Overflow Jobs
    - Scrape with permission: company career pages
    - Synthetic generation with templates
@@ -145,7 +145,7 @@ After training, a registry file is created at `models/registry.json`:
   "timestamp": 1699700000,
   "models": {
     "difficulty": "models/difficulty",
-    "experience": "models/experience", 
+    "experience": "models/experience",
     "alternatives": "models/alternatives"
   },
   "quick_mode": false

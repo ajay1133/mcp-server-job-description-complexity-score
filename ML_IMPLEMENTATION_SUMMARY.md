@@ -240,8 +240,8 @@ extractor = MLTechExtractor()
 
 # Same method signature!
 result = extractor.extract_technologies(
-    text="React developer", 
-    is_resume=False, 
+    text="React developer",
+    is_resume=False,
     prompt_override=""
 )
 ```
@@ -369,13 +369,13 @@ Models train in ~3 seconds in quick mode, perfect for CI.
 
 ## Summary
 
-✅ **4 ML models** implemented and trained  
-✅ **Graceful fallbacks** ensure no breaking changes  
-✅ **Backward compatible** API (drop-in replacement)  
-✅ **All 14 tests** passing  
-✅ **CI-friendly** (3-second quick training)  
-✅ **Extensible** (easy to add more models)  
-✅ **Well-documented** (README + demo)  
-✅ **Production-ready** architecture  
+✅ **4 ML models** implemented and trained
+✅ **Graceful fallbacks** ensure no breaking changes
+✅ **Backward compatible** API (drop-in replacement)
+✅ **All 14 tests** passing
+✅ **CI-friendly** (3-second quick training)
+✅ **Extensible** (easy to add more models)
+✅ **Well-documented** (README + demo)
+✅ **Production-ready** architecture
 
 The system is now truly ML-powered while maintaining stability and compatibility with existing code!

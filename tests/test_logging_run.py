@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-import os, json, glob, time
-import os, sys
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import glob
+import json
+import os
+import time
+
 from mcp_server.server import extract_technologies_
 
 # Project root is parent of this tests directory

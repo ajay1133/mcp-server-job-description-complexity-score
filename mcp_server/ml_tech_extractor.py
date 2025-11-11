@@ -14,12 +14,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 # Import ML models
-from mcp_server.ml_models import (
-    AlternativesModel,
-    DifficultyModel,
-    ExperienceModel,
-    TechExtractorModel,
-)
+from mcp_server.ml_models import AlternativesModel, DifficultyModel, ExperienceModel, TechExtractorModel
 
 MODELS_DIR = Path(__file__).parent.parent / "models"
 
