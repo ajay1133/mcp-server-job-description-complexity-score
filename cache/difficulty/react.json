@@ -1,0 +1,17 @@
+{
+  "difficulty": 3.8,
+  "confidence": 0.7,
+  "source": "heuristic",
+  "features": {
+    "github_stars_log": 12.390433787621898,
+    "github_forks_log": 10.81562969088395,
+    "github_issues_ratio": 4.3577876742803205,
+    "years_in_market": 12.465434633812457,
+    "npm_downloads_log": 19.069387955508297,
+    "stackoverflow_questions_log": 13.081397622551052,
+    "maintenance_score": 8.032646113341578,
+    "maturity_score": 15.445214246418207
+  },
+  "explanation": "React difficulty: 3.8/10. Very popular (240,488 stars) with extensive resources. Mature technology (12.5 years). Large StackOverflow community (479,929 questions)",
+  "timestamp": "2025-11-11T09:46:07.991793"
+}

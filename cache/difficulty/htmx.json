@@ -1,0 +1,17 @@
+{
+  "difficulty": 5.8,
+  "confidence": 0.7,
+  "source": "heuristic",
+  "features": {
+    "github_stars_log": 6.90875477931522,
+    "github_forks_log": 4.61512051684126,
+    "github_issues_ratio": 50.0,
+    "years_in_market": 5.0,
+    "npm_downloads_log": 7.232010331664759,
+    "stackoverflow_questions_log": 6.418364935936212,
+    "maintenance_score": -43.09124522068478,
+    "maturity_score": 3.4543773896576098
+  },
+  "explanation": "Htmx difficulty: 5.8/10. Limited community (999 stars), fewer resources",
+  "timestamp": "2025-11-11T09:51:35.114945"
+}

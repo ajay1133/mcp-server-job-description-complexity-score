@@ -3,7 +3,11 @@
 Test resume skill extraction
 """
 
-from mcp_server.simple_tech_extractor import SimpleTechExtractor
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from mcp_server.simple_tech_extractor import SimpleTechExtractor  # noqa: E402
 
 
 def test_resume_extraction():

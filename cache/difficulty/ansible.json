@@ -1,0 +1,17 @@
+{
+  "difficulty": 4.5,
+  "confidence": 0.7,
+  "source": "heuristic",
+  "features": {
+    "github_stars_log": 11.112134416406944,
+    "github_forks_log": 10.091086824325448,
+    "github_issues_ratio": 13.078921436889724,
+    "years_in_market": 13.681040383299111,
+    "npm_downloads_log": 5.60947179518496,
+    "stackoverflow_questions_log": 10.047501312675033,
+    "maintenance_score": -1.96678702048278,
+    "maturity_score": 15.202555969551131
+  },
+  "explanation": "Ansible difficulty: 4.5/10. Very popular (66,977 stars) with extensive resources. Mature technology (13.7 years). Large StackOverflow community (23,097 questions)",
+  "timestamp": "2025-11-11T13:24:37.708353"
+}

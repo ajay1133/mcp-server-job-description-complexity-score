@@ -1,0 +1,17 @@
+{
+  "difficulty": 4.4,
+  "confidence": 0.7,
+  "source": "heuristic",
+  "features": {
+    "github_stars_log": 11.347932890298049,
+    "github_forks_log": 8.451053388911692,
+    "github_issues_ratio": 11.015579851159938,
+    "years_in_market": 8.971937029431896,
+    "npm_downloads_log": 15.908746394378712,
+    "stackoverflow_questions_log": 8.761550139129644,
+    "maintenance_score": 0.3323530391381109,
+    "maturity_score": 10.181293930597318
+  },
+  "explanation": "Svelte difficulty: 4.4/10. Very popular (84,789 stars) with extensive resources. Mature technology (9.0 years)",
+  "timestamp": "2025-11-11T09:47:07.103753"
+}

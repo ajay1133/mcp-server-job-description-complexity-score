@@ -2,9 +2,11 @@
 import glob
 import json
 import os
+import sys
 import time
 
-from mcp_server.server import extract_technologies_
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from mcp_server.server import extract_technologies_  # noqa: E402
 
 # Project root is parent of this tests directory
 root_dir = os.path.dirname(os.path.dirname(__file__))

@@ -1,0 +1,17 @@
+{
+  "difficulty": 5.0,
+  "confidence": 0.3,
+  "source": "fallback",
+  "features": {
+    "github_stars_log": 6.90875477931522,
+    "github_forks_log": 4.61512051684126,
+    "github_issues_ratio": 50.0,
+    "years_in_market": 5.0,
+    "npm_downloads_log": 9.210440366976517,
+    "stackoverflow_questions_log": 6.2166061010848646,
+    "maintenance_score": -43.09124522068478,
+    "maturity_score": 3.4543773896576098
+  },
+  "explanation": "New-Framework difficulty: 5.0/10. Limited community (999 stars), fewer resources. Small community (499 SO questions)",
+  "timestamp": "2025-11-11T09:51:59.971095"
+}

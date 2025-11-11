@@ -1,0 +1,65 @@
+{
+  "timestamp": "2025-11-11T13:24:37.714832",
+  "data": {
+    "grafana": {
+      "difficulty": 5.2,
+      "category": "other",
+      "keywords": [
+        "grafana"
+      ],
+      "confidence": 0.7,
+      "source": "heuristic",
+      "explanation": "Grafana difficulty: 5.2/10. Very popular (70,766 stars) with extensive resources. Mature technology (11.9 years)"
+    },
+    "terraform": {
+      "difficulty": 5.8,
+      "category": "other",
+      "keywords": [
+        "terraform"
+      ],
+      "confidence": 0.7,
+      "source": "heuristic",
+      "explanation": "Terraform difficulty: 5.8/10. Limited community (999 stars), fewer resources. Large StackOverflow community (20,422 questions)"
+    },
+    "prometheus": {
+      "difficulty": 4.4,
+      "category": "other",
+      "keywords": [
+        "prometheus"
+      ],
+      "confidence": 0.7,
+      "source": "heuristic",
+      "explanation": "Prometheus difficulty: 4.4/10. Very popular (61,219 stars) with extensive resources. Mature technology (13.0 years)"
+    },
+    "datadog": {
+      "difficulty": 10.0,
+      "category": "other",
+      "keywords": [
+        "datadog"
+      ],
+      "confidence": 0.7,
+      "source": "heuristic",
+      "explanation": "Datadog difficulty: 10.0/10. Limited community (1 stars), fewer resources. Relatively new (1.4 years), evolving rapidly"
+    },
+    "jenkins": {
+      "difficulty": 5.8,
+      "category": "other",
+      "keywords": [
+        "jenkins"
+      ],
+      "confidence": 0.7,
+      "source": "heuristic",
+      "explanation": "Jenkins difficulty: 5.8/10. Limited community (999 stars), fewer resources. Large StackOverflow community (50,812 questions)"
+    },
+    "ansible": {
+      "difficulty": 4.5,
+      "category": "other",
+      "keywords": [
+        "ansible"
+      ],
+      "confidence": 0.7,
+      "source": "heuristic",
+      "explanation": "Ansible difficulty: 4.5/10. Very popular (66,977 stars) with extensive resources. Mature technology (13.7 years). Large StackOverflow community (23,097 questions)"
+    }
+  }
+}

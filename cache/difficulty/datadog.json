@@ -1,0 +1,17 @@
+{
+  "difficulty": 10.0,
+  "confidence": 0.7,
+  "source": "heuristic",
+  "features": {
+    "github_stars_log": 0.6931471805599453,
+    "github_forks_log": 0.6931471805599453,
+    "github_issues_ratio": 2000.0,
+    "years_in_market": 1.3607118412046544,
+    "npm_downloads_log": 8.76795190976342,
+    "stackoverflow_questions_log": 7.059617628291383,
+    "maintenance_score": -1999.30685281944,
+    "maturity_score": 0.09431735762855382
+  },
+  "explanation": "Datadog difficulty: 10.0/10. Limited community (1 stars), fewer resources. Relatively new (1.4 years), evolving rapidly",
+  "timestamp": "2025-11-11T13:21:51.962354"
+}
