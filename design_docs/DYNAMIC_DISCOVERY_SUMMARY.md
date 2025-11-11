@@ -130,7 +130,7 @@ $ python -m pytest tests/ -v
   - Integrated experience extraction with discovered techs
 
 ### Files Created
-- `demo_dynamic_discovery.py`: Comprehensive demo of new capability
+- `demos/demo_dynamic_discovery.py`: Comprehensive demo of new capability
 
 ### Files Unchanged
 - All test files (100% backward compatible)

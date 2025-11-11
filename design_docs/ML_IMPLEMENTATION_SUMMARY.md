@@ -102,7 +102,7 @@ Final Result with Alternatives
    - Performance metrics
    - Roadmap and future enhancements
 
-9. **`demo_ml_extraction.py`** (130 lines)
+9. **`demos/demo_ml_extraction.py`** (130 lines)
    - Interactive demonstration
    - Shows all 4 model capabilities
    - Resume-to-job matching example

@@ -29,7 +29,7 @@ dev = [
 mcp-server = "mcp_server.server:main"
 flask-score-server = "mcp_server.flask_app:main"
 train-model = "train_model:main"
-demo = "demo_time_estimation:main"
+# demo = "demo_time_estimation:main"  # File moved/removed
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]

@@ -76,12 +76,12 @@ htmx_info = registry.get_tech_info("htmx")
 - Tests baseline techs, unknown techs, custom additions
 - Tests similar tech search and singleton pattern
 
-### 3. Demo (`demo_tech_registry.py`)
+### 3. Demo (`demos/demo_tech_registry.py`)
 - Shows known vs unknown tech handling
 - Demonstrates manual tech addition
 - Real-world job description scenario
 
-### 4. Integration Guide (`TECH_REGISTRY_GUIDE.md`)
+### 4. Integration Guide (`design_docs/TECH_REGISTRY_GUIDE.md`)
 - Step-by-step migration plan
 - Code examples for SimpleTechExtractor/MLTechExtractor
 - External API integration patterns
@@ -177,7 +177,7 @@ difficulty_adjusted = adjust_for_adoption(difficulty, downloads)
 
 ```bash
 # Run the demo
-python demo_tech_registry.py
+python demos/demo_tech_registry.py
 
 # See how it handles:
 # - Known techs (React, Node, Postgres)
@@ -189,9 +189,9 @@ python demo_tech_registry.py
 ## Next Steps
 
 **Immediate:**
-1. Review integration approach in `TECH_REGISTRY_GUIDE.md`
+1. Review integration approach in `design_docs/TECH_REGISTRY_GUIDE.md`
 2. Decide: feature flag or full migration?
-3. Run demo: `python demo_tech_registry.py`
+3. Run demo: `python demos/demo_tech_registry.py`
 
 **Short-term:**
 1. Integrate with `SimpleTechExtractor` (behind flag)

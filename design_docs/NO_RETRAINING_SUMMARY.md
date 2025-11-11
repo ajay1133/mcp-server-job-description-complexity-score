@@ -160,7 +160,7 @@ new-framework     5.0/10       0.30         fallback
    - 7 comprehensive tests
    - All passing ✅
 
-3. **`demo_ml_difficulty.py`**
+3. **`demos/demo_ml_difficulty.py`**
    - Live demo showing no-retraining approach
    - Compares known vs new vs unknown techs
 
@@ -174,7 +174,7 @@ new-framework     5.0/10       0.30         fallback
 
 ```bash
 # Run demo
-python demo_ml_difficulty.py
+python demos/demo_ml_difficulty.py
 
 # Run tests
 pytest tests/test_ml_difficulty_estimator.py -v

@@ -699,11 +699,19 @@ mcp_complexity_scorer/
 │   ├── tfidf_vectorizer.joblib
 │   ├── score_model.joblib
 │   └── time_model.joblib
+├── demos/                     # Demo scripts
+│   └── demo_*.py             # Various demonstration scripts
+├── design_docs/              # Design documentation
+│   ├── DYNAMIC_DISCOVERY_SUMMARY.md
+│   ├── ML_IMPLEMENTATION_SUMMARY.md
+│   ├── NEW_TECH_SOLUTION.md
+│   ├── NO_RETRAINING_SUMMARY.md
+│   └── TECH_REGISTRY_GUIDE.md
+├── tests/                    # Test suite
+│   └── test_*.py            # Test files
 ├── train_model.py            # Train TF-IDF + regressors
 ├── training_data.py          # Labeled examples and validation ranges
-├── demo_time_estimation.py   # Demo runner printing examples
 ├── pyproject.toml            # Project dependencies
-├── test_scoring.py           # Scripted tests (ranges)
 └── README.md                 # This file
 ```
 

@@ -43,7 +43,14 @@ def extract_technologies_(
         resume: Resume text content directly
         resume_file: Path to resume file (.txt, .docx, .pdf, .doc)
     """
+    # Debug: Log that function was called
+    print(
+        f"[DEBUG] extract_technologies_ called with requirement={bool(requirement)}, resume={bool(resume)}, resume_file={bool(resume_file)}",
+        file=sys.stderr,
+    )
+
     logger = RequestLogger()
+    print(f"[DEBUG] Logger created, will write to: {logger.file_path}", file=sys.stderr)
 
     # Parse resume file if provided
     resume_text = resume
@@ -69,7 +76,12 @@ def extract_technologies_(
     else:
         result = {"error": "Either requirement, resume, or resume_file must be provided"}
 
+    print(
+        f"[DEBUG] About to finalize logger with result keys: {list(result.keys()) if isinstance(result, dict) else 'not-a-dict'}",
+        file=sys.stderr,
+    )
     logger.finalize(result)
+    print("[DEBUG] Logger finalized, log file written", file=sys.stderr)
     return result
 
 
@@ -94,9 +106,30 @@ def main(argv: List[str] | None = None) -> int:
         return 0
 
     mcp = FastMCP("tech-extractor")
-    mcp.tool()(extract_technologies_)
+
+    # Register the tool with explicit name
+    @mcp.tool()
+    def extract_technologies(
+        requirement: str = "",
+        resume: str = "",
+        resume_file: str = "",
+    ) -> dict:
+        """Extract required technologies from job requirements and/or resume.
+
+        Args:
+            requirement: Job description or additional prompt context
+            resume: Resume text content directly
+            resume_file: Path to resume file (.txt, .docx, .pdf, .doc)
+
+        Returns:
+            Dictionary containing detected technologies with difficulty ratings and alternatives
+        """
+        return extract_technologies_(requirement=requirement, resume=resume, resume_file=resume_file)
+
     print("[tech-extractor] Starting MCP server... (Ctrl+C to stop)")
-    print("[tech-extractor] Tool registered: extract_technologies(requirement: str, resume, resume_file) -> dict")
+    print(
+        "[tech-extractor] Tool registered: extract_technologies(requirement: str, resume: str, resume_file: str) -> dict"
+    )
     mcp.run()
     return 0
 

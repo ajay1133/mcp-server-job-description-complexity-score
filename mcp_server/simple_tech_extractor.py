@@ -55,7 +55,19 @@ class SimpleTechExtractor:
                 "category": "frontend",
                 "alternatives": ["javascript", "flow"],
             },
-            # Backend
+            # Backend / Languages
+            "python": {
+                "difficulty": 4.5,
+                "experience_required": 2.0,
+                "category": "backend",
+                "alternatives": ["java_spring", "golang", "node"],
+            },
+            "dotnet": {
+                "difficulty": 6.5,
+                "experience_required": 3.0,
+                "category": "backend",
+                "alternatives": ["java_spring", "golang", "node"],
+            },
             "node": {
                 "difficulty": 5.0,
                 "experience_required": 2.5,
@@ -202,6 +214,8 @@ class SimpleTechExtractor:
             "nextjs": ["nextjs", "next.js", "next js"],
             "svelte": ["svelte", "sveltekit"],
             "typescript": ["typescript", "ts"],
+            "python": ["python", " py "],
+            "dotnet": [".net", "dotnet", "dot net", ".net core", "asp.net"],
             "node": ["node", "node.js", "nodejs", "express", "expressjs"],
             "python_fastapi": ["fastapi", "fast api"],
             "flask": ["flask"],
@@ -528,6 +542,7 @@ class SimpleTechExtractor:
             r'flask|django|fastapi|spring|hibernate|'
             r'ruby|rails|laravel|symfony|express|nestjs|'
             r'servicenow|twilio|sendgrid|stripe|'
+            r'python|\.net|dotnet|csharp|c#|'
             r'ci/cd|cicd|continuous\s+integration|continuous\s+delivery)\b',
             text_lower,
         )
