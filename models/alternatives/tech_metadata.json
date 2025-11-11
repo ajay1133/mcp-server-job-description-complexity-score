@@ -1,0 +1,10 @@
+{
+  "tech_names": [
+    "react",
+    "vue",
+    "angular",
+    "node",
+    "python"
+  ],
+  "embedding_dim": 5
+}

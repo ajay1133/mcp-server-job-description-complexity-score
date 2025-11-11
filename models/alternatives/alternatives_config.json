@@ -1,0 +1,132 @@
+{
+  "baseline_alternatives": {
+    "react": [
+      "vue",
+      "angular",
+      "svelte",
+      "nextjs"
+    ],
+    "vue": [
+      "react",
+      "angular",
+      "svelte"
+    ],
+    "angular": [
+      "react",
+      "vue",
+      "svelte"
+    ],
+    "nextjs": [
+      "react",
+      "gatsby",
+      "nuxt"
+    ],
+    "svelte": [
+      "react",
+      "vue",
+      "angular"
+    ],
+    "typescript": [
+      "javascript",
+      "flow"
+    ],
+    "node": [
+      "python_fastapi",
+      "golang",
+      "java_spring"
+    ],
+    "python_fastapi": [
+      "flask",
+      "django",
+      "node"
+    ],
+    "flask": [
+      "fastapi",
+      "django",
+      "node"
+    ],
+    "django": [
+      "flask",
+      "fastapi",
+      "ruby_rails"
+    ],
+    "golang": [
+      "node",
+      "python_fastapi",
+      "java_spring"
+    ],
+    "java_spring": [
+      "golang",
+      "django",
+      "node"
+    ],
+    "ruby_rails": [
+      "django",
+      "node",
+      "php"
+    ],
+    "postgres": [
+      "mysql",
+      "mariadb",
+      "mongodb"
+    ],
+    "mysql": [
+      "postgres",
+      "mariadb",
+      "mongodb"
+    ],
+    "mongodb": [
+      "postgres",
+      "mysql",
+      "dynamodb"
+    ],
+    "redis": [
+      "memcached",
+      "elasticsearch"
+    ],
+    "dynamodb": [
+      "mongodb",
+      "cassandra",
+      "postgres"
+    ],
+    "cassandra": [
+      "dynamodb",
+      "mongodb",
+      "postgres"
+    ],
+    "docker": [
+      "kubernetes",
+      "podman"
+    ],
+    "kubernetes": [
+      "docker",
+      "nomad",
+      "ecs"
+    ],
+    "aws": [
+      "gcp",
+      "azure",
+      "digitalocean"
+    ],
+    "lambda": [
+      "azure_functions",
+      "google_cloud_functions"
+    ],
+    "kafka": [
+      "rabbitmq",
+      "sqs",
+      "redis"
+    ],
+    "rabbitmq": [
+      "kafka",
+      "sqs",
+      "redis"
+    ],
+    "elasticsearch": [
+      "solr",
+      "algolia",
+      "meilisearch"
+    ]
+  },
+  "version": "1.0.0"
+}

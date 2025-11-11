@@ -1,0 +1,41 @@
+# Ignore local dev artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.swp
+*.db
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Git
+.git/
+.gitignore
+
+# Python build outputs
+build/
+dist/
+*.egg-info/
+
+# Logs and traces
+logs/
+*.log
+
+# Model artifacts (mount or copy selectively if needed)
+models/
+
+# Test data and coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Node / misc
+node_modules/
+
+# IDE/editor
+.vscode/
+.idea/
+.DS_Store

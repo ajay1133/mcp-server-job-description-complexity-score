@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "timestamp": 1762813847,
+  "elapsed_seconds": 2.77,
+  "models": {
+    "difficulty": "models/difficulty",
+    "experience": "models/experience",
+    "alternatives": "models/alternatives"
+  },
+  "errors": [],
+  "quick_mode": true
+}

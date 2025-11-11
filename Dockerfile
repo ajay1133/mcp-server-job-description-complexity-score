@@ -1,37 +1,42 @@
-FROM python:3.11-slim
+# syntax=docker/dockerfile:1.7
+
+# Base image
+ARG PYTHON_VERSION=3.11
+FROM python:${PYTHON_VERSION}-slim AS base
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+# Minimal system deps (OpenMP runtime for scikit-learn)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+# Copy dependency manifest first to leverage Docker cache
+COPY pyproject.toml ./
 
-# Copy requirements
-COPY pyproject.toml .
+# Install project dependencies
+RUN python -m pip install --upgrade pip setuptools wheel \
+    && pip install .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir .
+# Copy application source
+COPY mcp_server ./mcp_server
+COPY training_data ./training_data
+COPY train_system_design_models.py ./
 
-# Copy application code
-COPY mcp_server/ ./mcp_server/
-COPY config/ ./config/
-COPY models/ ./models/
-COPY data/ ./data/
-
-# Create logs directory
+# Logs directory
 RUN mkdir -p logs/complexity_scorer_logs
-
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
 ENV SOFTWARE_LOG_DIR=/app/logs/complexity_scorer_logs
 
-# Expose port (if needed for future HTTP interface)
+# Runtime configuration
+ENV HOST=0.0.0.0 \
+    PORT=8000 \
+    FLASK_MODE=0
+
 EXPOSE 8000
 
-# Default command can be overridden at runtime.
-# Use FLASK_MODE=1 to start Flask API server instead of MCP server.
-ENV FLASK_MODE=0
-
-CMD ["/bin/sh", "-c", "if [ \"$FLASK_MODE\" = \"1\" ]; then python -m mcp_server.flask_app; else python mcp_server/server.py; fi"]
+# Switch between Flask API and MCP server via FLASK_MODE
+CMD ["/bin/sh", "-c", "if [ \"$FLASK_MODE\" = \"1\" ]; then python -m mcp_server.flask_app; else python -m mcp_server.server; fi"]

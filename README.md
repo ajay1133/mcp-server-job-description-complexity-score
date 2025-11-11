@@ -1,104 +1,131 @@
-# MCP Complexity Scorer
+# Technology Extractor MCP Server
 
-**⚠️ DEPRECATION NOTICE**: The original `ComplexityScorer` (multi-profession with online search) is **deprecated**. Use the new **SoftwareComplexityScorer** for software-only requirements. See [SOFTWARE_SCORER.md](SOFTWARE_SCORER.md) for migration guide.
+A lightweight MCP (Model Context Protocol) server that extracts required technologies from job descriptions **and resume files** and provides difficulty ratings with alternatives.
 
----
+## Features
 
-## Software-only complexity scorer (recommended)
+- **Technology Detection**: Automatically detects technologies mentioned in text or resume files
+- **Resume File Support**: Parse .txt, .docx, .pdf, and .doc resume files
+- **Difficulty Ratings**: Provides difficulty scores (1-10 scale) for each technology
+- **Experience Tracking**: Three-tier experience validation:
+  - `experience_mentioned_in_prompt`: Years specified in job requirements
+  - `experience_accounted_for_in_resume`: Years extracted from resume
+  - `experience_validated_via_github`: GitHub-based verification (placeholder for future)
+- **Smart Alternatives**: Suggests alternative technologies with their difficulty ratings
+- **Simple Schema**: Returns clean, structured JSON with no overhead
+- **Request Logging**: Automatic per-request logging with timing, CPU, and memory metrics
 
-If you want to score only software/computer requirements and avoid any profession lookup or online-search heuristics, use `SoftwareComplexityScorer`.
+## Installation
 
-What it does:
-- Detects whether a prompt is software-related (model-based, not hardcoded keywords)
-- Predicts technologies involved (multi-label)
-- **NEW**: Recognizes standard application patterns (Twitter, Instagram, YouTube, WhatsApp, Uber, etc.)
-- **NEW**: Infers comprehensive technology stacks based on industry best practices
-- **NEW**: Suggests complete microservice architectures for known patterns
-- Estimates lines of code and manual coding hours
-- Computes a complexity score (either via a trained regressor or a heuristic from LOC/tech)
-- Estimates time with AI assistance and lists useful tools to accelerate delivery
-- Returns an error when the prompt is not a software job
-
-### System Design Pattern Recognition
-
-The scorer now includes a comprehensive knowledge base of 10+ standard applications:
-
-**Supported Patterns**:
-- **Twitter Clone**: Microblogging with feeds, tweets, real-time updates
-- **Instagram Clone**: Photo/video sharing with stories, feeds, likes
-- **YouTube Clone**: Video streaming with upload, transcoding, CDN
-- **WhatsApp Clone**: Messaging with E2E encryption, real-time delivery
-- **Uber Clone**: Ride-hailing with geospatial, matching, payments
-- **Netflix Clone**: Video streaming with subscriptions, recommendations
-- **Airbnb Clone**: Rental marketplace with search, booking, reviews
-- **E-commerce/Shopify**: Online store with cart, checkout, inventory
-- **Slack Clone**: Team collaboration with channels, DMs, file sharing
-- **TikTok Clone**: Short-form video with ML-driven feed algorithm
-
-When you request a pattern (e.g., "Build a Twitter clone"), the scorer automatically:
-1. Detects 10-13 microservices (not just 2-3)
-2. Infers 15-22 technologies including infrastructure (Redis, Kafka, CDN, S3, Elasticsearch, etc.)
-3. Provides accurate time estimates reflecting full system complexity
-4. Shows which pattern was matched in enrichment metadata
-
-**Example**:
 ```bash
-Input: "Build a Twitter clone with feed and real-time updates"
-Output:
-  - 12 microservices: api-gateway, user-service, auth-service, tweet-service, 
-                      timeline-service, follow-service, notification-service,
-                      media-service, search-service, analytics-service, etc.
-  - 22 technologies: React, Node, Postgres, Cassandra, Redis, S3, CDN, Kafka,
-                     Elasticsearch, Nginx, Docker, Kubernetes, monitoring, etc.
-  - Time: 66.7h manual, 23.3h AI-assisted
-  - Pattern: twitter_clone
+# Clone the repository
+git clone https://github.com/ajay1133/mcp-server-job-description-complexity-score.git
+cd mcp-server-job-description-complexity-score
+
+# Install dependencies (includes resume parsing libraries)
+pip install -e .
+# OR with uv:
+uv pip install -e .
 ```
 
-See [SYSTEM_DESIGN_INTEGRATION.md](SYSTEM_DESIGN_INTEGRATION.md) for complete documentation.
+**Resume parsing dependencies automatically installed:**
+- `python-docx` for .docx files
+- `PyPDF2` for .pdf files
+- `python-magic-bin` for Windows file type detection
 
-Train models:
+## Usage
 
-```powershell
-python train_software_models.py --data data\software_training_data.example.jsonl --out models\software
+### As MCP Server
+
+```bash
+python mcp_server/server.py
 ```
 
-Use in code:
+### Self-Test
+
+```bash
+python mcp_server/server.py --self-test
+```
+
+### As Python Module
 
 ```python
-from mcp_server.software_complexity_scorer import SoftwareComplexityScorer
+from mcp_server.simple_tech_extractor import SimpleTechExtractor
 
-scorer = SoftwareComplexityScorer(model_dir="models/software")
-result = scorer.analyze_text("Build a React dashboard with Stripe payments")
-if result.get("ok"):
-  print(result["complexity_score"], result["technologies"], result["predicted_hours_with_ai"])
-else:
-  print("ERROR:", result["error"])  # Non-software prompts will return an error
+extractor = SimpleTechExtractor()
+result = extractor.extract_technologies("Senior Full-Stack Engineer with React and Node.js")
+
+print(result)
+# {
+#   "technologies": {
+#     "react": {
+#       "difficulty": 5.2,
+#       "experience_required": 2.5,
+#       "mentioned_in_prompt": true,
+#       "category": "frontend",
+#       "alternatives": {
+#         "vue": {"difficulty": 4.8, "experience_required": 2.0},
+#         "angular": {"difficulty": 6.5, "experience_required": 3.0}
+#       }
+#     },
+#     "node": {
+#       "difficulty": 5.0,
+#       "experience_required": 2.5,
+#       "mentioned_in_prompt": true,
+#       "category": "backend",
+#       "alternatives": {
+#         "python_fastapi": {"difficulty": 4.5, "experience_required": 2.0}
+#       }
+#     }
+#   }
+# }
 ```
 
-Notes:
-- The example dataset (`data/software_training_data.example.jsonl`) is illustrative only; curate your own data for best results.
-- This scorer does not use any online search and does not output non-software professions.
-- See [SOFTWARE_SCORER.md](SOFTWARE_SCORER.md) for detailed training guide, tech ontology, and usage examples.
+## Response Schema
 
-### No hardcoded keywords: training pipeline
-
-To avoid keyword heuristics entirely and build a robust ML dataset, use the multi-source + active learning workflow:
-
-1) Bootstrap a tiny seed set (no templates)
-
-```powershell
-python bootstrap_training_data.py
+```json
+{
+  "technologies": {
+    "<tech_name>": {
+      "difficulty": 5.2,                    // 1-10 scale
+      "mentioned_in_prompt": true,          // boolean
+      "category": "frontend",               // category
+      "alternatives": {
+        "<alt_tech_name>": {
+          "difficulty": 4.8
+        }
+      },
+      "experience_required": 5.0            // Optional: only if explicitly mentioned (e.g., "5+ years React")
+    }
+  }
+}
 ```
 
-2) Collect unlabeled, mixed-domain text (no filters)
+**Note**: `experience_required` is only included when explicitly mentioned in the prompt (e.g., "5+ years React" or "3 years Node.js experience").
 
-```powershell
-python collect_unlabeled_data.py --limit 200
-```
+## Supported Technologies
 
-3) Active learning: label only uncertain examples efficiently
+### Frontend
+- React, Vue, Angular, Next.js, Svelte, TypeScript
 
-```powershell
+### Backend
+- Node.js, FastAPI, Flask, Django, Golang, Java Spring, Ruby on Rails
+
+### Database
+- PostgreSQL, MySQL, MongoDB, Redis, DynamoDB, Cassandra
+
+### Infrastructure
+- Docker, Kubernetes, AWS, Lambda
+
+### Messaging
+- Kafka, RabbitMQ
+
+### Search
+- Elasticsearch
+
+## License
+
+MIT
 python active_learning_loop.py
 ```
 
