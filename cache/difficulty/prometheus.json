@@ -1,0 +1,17 @@
+{
+  "difficulty": 4.4,
+  "confidence": 0.7,
+  "source": "heuristic",
+  "features": {
+    "github_stars_log": 11.022229212499404,
+    "github_forks_log": 9.202409001649903,
+    "github_issues_ratio": 12.136754929025303,
+    "years_in_market": 12.960985626283367,
+    "npm_downloads_log": 7.3758821482150125,
+    "stackoverflow_questions_log": 8.868976189274543,
+    "maintenance_score": -1.1145257165258986,
+    "maturity_score": 14.285895439280543
+  },
+  "explanation": "Prometheus difficulty: 4.4/10. Very popular (61,219 stars) with extensive resources. Mature technology (13.0 years)",
+  "timestamp": "2025-11-11T13:21:41.460069"
+}

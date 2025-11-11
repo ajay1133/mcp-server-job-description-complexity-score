@@ -87,21 +87,27 @@ print(result)
 {
   "technologies": {
     "<tech_name>": {
-      "difficulty": 5.2,                    // 1-10 scale
-      "mentioned_in_prompt": true,          // boolean
-      "category": "frontend",               // category
+      "difficulty": 5.2,                       // 1-10 scale
+      "category": "frontend",                  // category
+      "mentioned_explicitly": true,            // true if tech name appears in prompt/resume
+      "experience_estimate": "5 years",        // Estimated from resume (priority) or prompt; can be years or a level like "senior"/"junior"
       "alternatives": {
         "<alt_tech_name>": {
-          "difficulty": 4.8
+          "difficulty": 4.8,
+          "experience_estimate": "5 years"    // Propagated global estimate when present
         }
       },
-      "experience_required": 5.0            // Optional: only if explicitly mentioned (e.g., "5+ years React")
+      "experience_mentioned_in_prompt": 5.0,    // If explicit years for this tech in prompt (legacy compatibility)
+      "experience_accounted_for_in_resume": 3.0,// If explicit years for this tech in resume (legacy compatibility)
+      "experience_validated_via_github": null   // Placeholder for future
     }
   }
 }
 ```
 
-**Note**: `experience_required` is only included when explicitly mentioned in the prompt (e.g., "5+ years React" or "3 years Node.js experience").
+Notes:
+- `experience_estimate` prefers resume over prompt. If explicit years are not available, seniority terms like "senior", "mid", or "junior" are used when present.
+- Alternatives receive the global estimate (overall years or seniority) when available; tech-specific years are not applied to alternatives.
 
 ## Supported Technologies
 

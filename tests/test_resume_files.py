@@ -4,10 +4,12 @@ Test resume file parsing and new experience fields
 """
 
 import os
+import sys
 import tempfile
 
-from mcp_server.resume_parser import parse_resume_file
-from mcp_server.simple_tech_extractor import SimpleTechExtractor
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from mcp_server.resume_parser import parse_resume_file  # noqa: E402
+from mcp_server.simple_tech_extractor import SimpleTechExtractor  # noqa: E402
 
 
 def test_new_experience_fields():
